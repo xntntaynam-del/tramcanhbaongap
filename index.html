@@ -5,8 +5,10 @@
   <title>Trạm cảm biến báo ngập – Realtime</title>
 
   <!-- Leaflet CSS -->
-  <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 
   <style>
     * { box-sizing: border-box; }
@@ -24,6 +26,8 @@
       --text-main: #e5e7eb;
       --text-sub: #9ca3af;
       --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
       --shadow-soft: 0 18px 45px rgba(0,0,0,0.6);
     }
 
@@ -37,6 +41,8 @@
       --text-main: #111827;
       --text-sub: #6b7280;
       --accent-blue: #007aff;
+      --accent-green: #16a34a;
+      --accent-red: #dc2626;
       --shadow-soft: 0 18px 40px rgba(15,23,42,0.15);
     }
 
@@ -98,6 +104,10 @@
       background: rgba(15,23,42,0.1);
       color: var(--text-main);
       font-size: 13px;
+    }
+
+    .search-box::placeholder {
+      color: var(--text-sub);
     }
 
     .sidebar-section-title {
@@ -191,6 +201,7 @@
       color: var(--text-main);
       font-size: 16px;
       transition: .25s;
+      box-shadow: var(--shadow-soft);
     }
 
     .layout.sidebar-collapsed #sidebarToggle {
@@ -216,6 +227,7 @@
       justify-content: space-between;
       padding: 0 12px;
       backdrop-filter: blur(25px);
+      z-index: 10;
     }
 
     .tab-btn {
@@ -255,11 +267,55 @@
       bottom: 12px;
       z-index: 1000;
       width: 430px;
+      max-width: calc(100% - 24px);
       background: var(--bg-card);
       padding: 14px;
       border-radius: 18px;
       border: 1px solid var(--border-soft);
       display: none;
+      box-shadow: var(--shadow-soft);
+    }
+
+    #historyPanel h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .panel-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .panel-row select,
+    .panel-row input[type="date"] {
+      flex: 1;
+      padding: 4px 8px;
+      background: rgba(15,23,42,0.15);
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      color: var(--text-main);
+      font-size: 12px;
+    }
+
+    body[data-theme="light"] .panel-row select,
+    body[data-theme="light"] .panel-row input[type="date"] {
+      background: #ffffff;
+    }
+
+    .small-btn {
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(15,23,42,0.2);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    body[data-theme="light"] .small-btn {
+      background: #ffffff;
     }
 
     canvas {
@@ -268,6 +324,75 @@
       margin-top: 8px;
     }
 
+    body[data-theme="light"] canvas {
+      background: #f9fafb;
+    }
+
+    .panel-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    /* ======================
+       POPUP CARD
+    ====================== */
+    .popup-card {
+      width: 260px;
+      padding: 12px 14px 10px;
+      border-radius: 18px;
+      background: linear-gradient(145deg,#0f172a,#020617);
+      color: #e5e7eb;
+      font-size: 13px;
+    }
+
+    body[data-theme="light"] .popup-card {
+      background: linear-gradient(145deg,#ffffff,#f3f4f6);
+      color: #111827;
+    }
+
+    .popup-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .popup-sub {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 6px;
+    }
+
+    .popup-chip {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.15);
+      margin-bottom: 6px;
+    }
+
+    .popup-row {
+      font-size: 12px;
+      margin: 2px 0;
+    }
+
+    .popup-row b {
+      float: right;
+    }
+
+    .popup-link {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 12px;
+      text-decoration: none;
+      color: #93c5fd;
+    }
+
+    body[data-theme="light"] .popup-link {
+      color: #2563eb;
+    }
   </style>
 </head>
 
@@ -284,7 +409,11 @@
       <div class="subtitle">Realtime • Firebase • ESP32</div>
     </div>
 
-    <input id="searchBox" class="search-box" placeholder="Tìm trạm theo tên hoặc ID..." />
+    <input
+      id="searchBox"
+      class="search-box"
+      placeholder="Tìm trạm theo tên hoặc ID..."
+    />
 
     <div class="sidebar-section-title">Danh sách trạm</div>
     <div id="stationList" class="station-list"></div>
@@ -324,7 +453,7 @@
 
         <div class="panel-row">
           <select id="historyStation"></select>
-          <input type="date" id="historyDate">
+          <input type="date" id="historyDate" />
         </div>
 
         <div class="panel-row">
@@ -346,681 +475,619 @@
   </main>
 </div>
 
-<!-- END PART 1/3 -->
-<!-- PART 2/3 – FULL JS (Firebase + Map + Marker + Popup + Sidebar + Heatmap + Tabs) -->
-<script type="module">
-
-/* ============================
-   1) FIREBASE IMPORT
-============================ */
-import { initializeApp } 
-  from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-
-import {
-  getDatabase,
-  ref,
-  onValue,
-  get,
-  child
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-
-/* ============================
-   2) THEME SWITCH
-============================ */
-const body = document.body;
-const btnTheme = document.getElementById("btnTheme");
-
-const savedTheme = localStorage.getItem("ngap-theme");
-body.dataset.theme = savedTheme || "dark";
-
-function updateThemeButton() {
-  btnTheme.textContent = body.dataset.theme === "light"
-    ? "☀️ Light"
-    : "🌙 Dark";
-}
-updateThemeButton();
-
-btnTheme.addEventListener("click", () => {
-  body.dataset.theme = body.dataset.theme === "dark" ? "light" : "dark";
-  localStorage.setItem("ngap-theme", body.dataset.theme);
-  updateThemeButton();
-});
-
-
-/* ============================
-   3) FIREBASE CONFIG (OK)
-============================ */
-const firebaseConfig = {
-  apiKey: "AIzaSyC2aoNSms-fOf0jjAeIwxmE-X1RfPlvEL4",
-  authDomain: "tram-do-1.firebaseapp.com",
-  databaseURL: "https://tram-do-1-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "tram-do-1",
-  storageBucket: "tram-do-1.appspot.com",
-  messagingSenderId: "1053488938946",
-  appId: "1:1053488938946:web:7f9f4dbc1aca8dffb7605b"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);   // GitHub Pages dùng WS OK – không cần longPolling
-
-
-/* ============================
-   4) STATION META
-============================ */
-const STATION_META = {
-  station01: {
-    name: "Trạm 01 - QL50",
-    address: "Quốc Lộ 50 - Bình Chánh",
-    lat: 10.77563018246902,
-    lng: 106.65557870049943
-  }
-};
-
-function makeStatus(waterCm) {
-  if (waterCm < 5)  return { label: "An toàn", className: "status-safe", badgeClass: "badge-safe" };
-  if (waterCm < 15) return { label: "Ngập nhẹ", className: "status-light", badgeClass: "badge-light" };
-  if (waterCm < 30) return { label: "Ngập vừa", className: "status-medium", badgeClass: "badge-med" };
-  return { label: "Ngập nặng", className: "status-heavy", badgeClass: "badge-heavy" };
-}
-
-
-/* ============================
-   5) MAP INIT
-============================ */
-const map = L.map("map", { zoomControl: true })
-             .setView([10.77563018246902, 106.65557870049943], 16);
-
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: "&copy; OpenStreetMap"
-}).addTo(map);
-
-
-/* ============================
-   6) HEATMAP
-============================ */
-let heatmapEnabled = false;
-
-const heatLayer = L.heatLayer([], {
-  radius: 35,
-  blur: 20,
-  maxZoom: 18
-}).addTo(map);
-
-function updateHeatmap(stationsMap) {
-  if (!heatmapEnabled) {
-    heatLayer.setLatLngs([]);
-    return;
-  }
-
-  const pts = [];
-  Object.entries(stationsMap).forEach(([id, s]) => {
-    const meta = STATION_META[id];
-    if (!meta) return;
-
-    const level = s.water_level ?? 0;
-    const intensity = Math.min(Math.max(level / 50, 0), 1);
-    pts.push([meta.lat, meta.lng, intensity]);
-  });
-
-  heatLayer.setLatLngs(pts);
-}
-
-document.getElementById("btnHeatmap")
-  .addEventListener("click", () => {
-    heatmapEnabled = !heatmapEnabled;
-    document.getElementById("btnHeatmap").textContent =
-      heatmapEnabled ? "🌈 Heatmap: ON" : "🌈 Heatmap: OFF";
-    updateHeatmap(currentStations);
-  });
-
-
-/* ============================
-   7) SIDEBAR COLLAPSE
-============================ */
-const layout = document.getElementById("layout");
-const sidebarToggle = document.getElementById("sidebarToggle");
-
-sidebarToggle.onclick = () => {
-  const collapsed = layout.classList.toggle("sidebar-collapsed");
-  sidebarToggle.textContent = collapsed ? "⮞" : "⮜";
-  setTimeout(() => map.invalidateSize(), 300);
-};
-
-
-/* ============================
-   8) MARKERS + SIDEBAR + POPUP
-============================ */
-const stationListEl = document.getElementById("stationList");
-const searchBox = document.getElementById("searchBox");
-const historyStationSelect = document.getElementById("historyStation");
-
-let currentStations = {};
-let activeStationId = null;
-const markers = {};
-
-function createOrUpdateMarker(id, s) {
-  const meta = {
-    name: s.name || STATION_META[id]?.name || id,
-    address: s.address || STATION_META[id]?.address || "",
-    lat: s.lat ?? STATION_META[id]?.lat,
-    lng: s.lng ?? STATION_META[id]?.lng
-  };
-
-  const status = makeStatus(s.water_level ?? 0);
-
-  let color = "green";
-  if (status.label === "Ngập nhẹ")  color = "blue";
-  else if (status.label === "Ngập vừa")  color = "orange";
-  else if (status.label === "Ngập nặng") color = "red";
-
-  const icon = L.icon({
-    iconUrl:
-      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-" +
-      color + ".png",
-    iconSize: [25,41],
-    iconAnchor: [12,41],
-    popupAnchor: [1,-34]
-  });
-
-  if (!markers[id]) {
-    markers[id] = L.marker([meta.lat, meta.lng], { icon }).addTo(map);
-    markers[id].on("click", () => showStationPopup(id));
-  } else {
-    markers[id].setLatLng([meta.lat, meta.lng]);
-    markers[id].setIcon(icon);
-  }
-}
-
-function buildSidebar(stationsMap) {
-  stationListEl.innerHTML = "";
-  historyStationSelect.innerHTML = "";
-
-  Object.entries(stationsMap).forEach(([id, s]) => {
-    const meta = {
-      name: s.name || STATION_META[id]?.name || id,
-      address: s.address || STATION_META[id]?.address || ""
-    };
-
-    const st = makeStatus(s.water_level ?? 0);
-
-    const div = document.createElement("div");
-    div.className = "station-item";
-    div.dataset.id = id;
-
-    div.innerHTML = `
-      <div class="station-name">${meta.name}</div>
-      <div class="station-id">${id}</div>
-      <div class="chip">
-        <span class="chip-label">Mực nước:</span>
-        <span class="${st.className}">${s.water_level ?? 0} cm – ${st.label}</span>
-      </div>
-    `;
-
-    div.onclick = () => {
-      activeStationId = id;
-      focusStation(id);
-    };
-
-    stationListEl.appendChild(div);
-
-    const opt = document.createElement("option");
-    opt.value = id;
-    opt.textContent = `${meta.name} (${id})`;
-    historyStationSelect.appendChild(opt);
-  });
-
-  highlightSidebarActive();
-}
-
-function highlightSidebarActive() {
-  const items = stationListEl.querySelectorAll(".station-item");
-  items.forEach(el => {
-    el.classList.toggle("active", el.dataset.id === activeStationId);
-  });
-}
-
-function focusStation(id) {
-  const s = currentStations[id];
-  if (!s) return;
-
-  const meta = {
-    name: s.name || STATION_META[id]?.name,
-    lat: s.lat ?? STATION_META[id]?.lat,
-    lng: s.lng ?? STATION_META[id]?.lng
-  };
-
-  map.setView([meta.lat, meta.lng], 17, { animate: true });
-  showStationPopup(id);
-  highlightSidebarActive();
-}
-
-function showStationPopup(id) {
-  const s = currentStations[id];
-  if (!s) return;
-
-  const meta = {
-    name: s.name || STATION_META[id]?.name,
-    address: s.address || STATION_META[id]?.address,
-    lat: s.lat ?? STATION_META[id]?.lat,
-    lng: s.lng ?? STATION_META[id]?.lng
-  };
-
-  const water = s.water_level ?? 0;
-  const road = s.road_flood ?? water;
-  const rise = s.rise_rate ?? 0;
-  const fall = s.fall_rate ?? 0;
-  const dur  = s.flood_duration ?? 0;
-  const over = Number(s.over_sidewalk) === 1;
-
-  const status = makeStatus(water);
-
-  const html = `
-    <div class="popup-card">
-      <div class="popup-title"><b>${meta.name}</b></div>
-      <div class="popup-sub">${meta.address}</div>
-      <div class="chip" style="margin-top:6px">${water} cm – ${status.label}</div>
-      <hr>
-
-      <div>🌊 Mực nước: <b>${water} cm</b></div>
-      <div>🚧 Mặt đường: <b>${road} cm</b></div>
-      <div>🟥 Tràn lề: <b style="color:${over ? 'red':'#4ade80'}">${over ? 'CÓ':'Không'}</b></div>
-      <div>📈 Dâng: <b>${rise.toFixed(2)}</b> cm/phút</div>
-      <div>📉 Rút: <b>${fall.toFixed(2)}</b> cm/phút</div>
-      <div>⏱ Ngập: <b>${dur.toFixed(1)}</b> phút</div>
-      <br>
-
-      <a target="_blank"
-         href="https://maps.google.com/?q=${meta.lat},${meta.lng}">
-         📍 Mở bản đồ
-      </a>
-    </div>
-  `;
-
-  markers[id].bindPopup(html).openPopup();
-}
-
-
-/* ============================
-   9) REALTIME LISTENER
-============================ */
-const stationsRef = ref(db, "stations");
-
-onValue(stationsRef, snap => {
-  const data = snap.val();
-  if (!data) return;
-
-  currentStations = data;
-
-  Object.entries(data).forEach(([id, s]) => createOrUpdateMarker(id, s));
-
-  buildSidebar(data);
-  updateHeatmap(data);
-});
-
-
-/* ============================
-   10) SEARCH FILTER
-============================ */
-searchBox.addEventListener("input", () => {
-  const q = searchBox.value.trim().toLowerCase();
-  document.querySelectorAll(".station-item").forEach(el => {
-    const id = el.dataset.id.toLowerCase();
-    const name = (currentStations[el.dataset.id]?.name ||
-                  STATION_META[el.dataset.id]?.name ||
-                  "").toLowerCase();
-
-    el.style.display = (!q || id.includes(q) || name.includes(q))
-      ? "" : "none";
-  });
-});
-
-
-/* ============================
-   11) TABS (MAP / HISTORY)
-============================ */
-const tabMap = document.getElementById("tabMap");
-const tabHistory = document.getElementById("tabHistory");
-const historyPanel = document.getElementById("historyPanel");
-
-function setTab(name) {
-  if (name === "map") {
-    tabMap.classList.add("active");
-    tabHistory.classList.remove("active");
-    historyPanel.style.display = "none";
-  } else {
-    tabHistory.classList.add("active");
-    tabMap.classList.remove("active");
-    historyPanel.style.display = "block";
-    setTimeout(() => map.invalidateSize(), 200);
-  }
-}
-
-tabMap.onclick = () => setTab("map");
-tabHistory.onclick = () => setTab("history");
-setTab("map");
-
-</script>
-<!-- END PART 2/3 -->
-<!-- PART 3/3 – HISTORY + CHARTJS + CSV/PDF EXPORT -->
-
-<!-- ChartJS + jsPDF -->
+<!-- LIBS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<!-- MAIN APP -->
 <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    onValue,
+    get,
+    child
+  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-import {
-  get,
-  child,
-  ref
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+  /* ==========================
+     THEME SWITCH
+  ========================== */
+  const body = document.body;
+  const btnTheme = document.getElementById("btnTheme");
+  const savedTheme = localStorage.getItem("ngap-theme");
+  body.dataset.theme = savedTheme || "dark";
 
-const db = getDatabase();
+  function updateThemeButton() {
+    btnTheme.textContent =
+      body.dataset.theme === "light" ? "☀️ Light" : "🌙 Dark";
+  }
+  updateThemeButton();
 
-/* DOM */
-const historyDateInput = document.getElementById("historyDate");
-const btnLoadHistory   = document.getElementById("btnLoadHistory");
-const btnToday         = document.getElementById("btnToday");
-const btn7d            = document.getElementById("btn7d");
-const btn30d           = document.getElementById("btn30d");
-const btnCsv           = document.getElementById("btnCsv");
-const btnPdf           = document.getElementById("btnPdf");
-const historyChartCanvas = document.getElementById("historyChart");
+  btnTheme.addEventListener("click", () => {
+    body.dataset.theme = body.dataset.theme === "dark" ? "light" : "dark";
+    localStorage.setItem("ngap-theme", body.dataset.theme);
+    updateThemeButton();
+  });
 
-let historyChart = null;
-let currentHistoryRows = [];
-let currentHistoryStationName = "";
-const historyStationSelect = document.getElementById("historyStation");
+  /* ==========================
+     FIREBASE CONFIG
+  ========================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyC2aoNSms-fOf0jjAeIwxmE-X1RfPlvEL4",
+    authDomain: "tram-do-1.firebaseapp.com",
+    databaseURL: "https://tram-do-1-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tram-do-1",
+    storageBucket: "tram-do-1.appspot.com",
+    messagingSenderId: "1053488938946",
+    appId: "1:1053488938946:web:7f9f4dbc1aca8dffb7605b"
+  };
 
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-/* ==========
-   TODAY DATE
-=========== */
-function setToday() {
-  const d = new Date();
-  historyDateInput.value = d.toISOString().slice(0, 10);
-}
-btnToday.onclick = setToday;
-setToday();
+  /* ==========================
+     STATION META
+  ========================== */
+  const STATION_META = {
+    station01: {
+      name: "Trạm 01 - QL50",
+      address: "Quốc Lộ 50 - Bình Chánh",
+      lat: 10.77563018246902,
+      lng: 106.65557870049943
+    }
+    // có thể thêm station02, station03...
+  };
 
-
-/* ==========
-   LOAD 1 DAY
-=========== */
-async function loadHistoryDay() {
-  const stId = historyStationSelect.value;
-  const date = historyDateInput.value;
-
-  if (!stId || !date) {
-    alert("Vui lòng chọn trạm và ngày.");
-    return;
+  function makeStatus(waterCm) {
+    if (waterCm < 5)  return { label: "An toàn",     className: "status-safe"   };
+    if (waterCm < 15) return { label: "Ngập nhẹ",   className: "status-light"  };
+    if (waterCm < 30) return { label: "Ngập vừa",   className: "status-medium" };
+    return { label: "Ngập nặng", className: "status-heavy" };
   }
 
-  const snap = await get(child(ref(db), `history/${stId}/${date}`));
-  const data = snap.val();
+  /* ==========================
+     MAP + TILE
+  ========================== */
+  const map = L.map("map", { zoomControl: true })
+               .setView([10.77563018246902, 106.65557870049943], 16);
 
-  if (!data) {
-    alert("Không có dữ liệu trong ngày này.");
-    if (historyChart) historyChart.destroy();
-    currentHistoryRows = [];
-    return;
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
+
+  /* ==========================
+     HEATMAP
+  ========================== */
+  let heatmapEnabled = false;
+  const heatLayer = L.heatLayer([], {
+    radius: 35,
+    blur: 20,
+    maxZoom: 18
+  }).addTo(map);
+
+  function updateHeatmap(stationsMap) {
+    if (!heatmapEnabled) {
+      heatLayer.setLatLngs([]);
+      return;
+    }
+    const pts = [];
+    Object.entries(stationsMap).forEach(([id, s]) => {
+      const meta = STATION_META[id];
+      if (!meta) return;
+      const level = s.water_level ?? 0;
+      const intensity = Math.min(Math.max(level / 50, 0), 1);
+      pts.push([meta.lat, meta.lng, intensity]);
+    });
+    heatLayer.setLatLngs(pts);
   }
 
-  const labels = [];
-  const wl = [];
-  const rise = [];
-  const fall = [];
+  const btnHeatmap = document.getElementById("btnHeatmap");
+  btnHeatmap.addEventListener("click", () => {
+    heatmapEnabled = !heatmapEnabled;
+    btnHeatmap.textContent = heatmapEnabled
+      ? "🌈 Heatmap: ON"
+      : "🌈 Heatmap: OFF";
+    updateHeatmap(currentStations);
+  });
 
-  currentHistoryRows = [];
+  /* ==========================
+     SIDEBAR COLLAPSE
+  ========================== */
+  const layout = document.getElementById("layout");
+  const sidebarToggle = document.getElementById("sidebarToggle");
+  sidebarToggle.onclick = () => {
+    const collapsed = layout.classList.toggle("sidebar-collapsed");
+    sidebarToggle.textContent = collapsed ? "⮞" : "⮜";
+    setTimeout(() => map.invalidateSize(), 300);
+  };
 
-  Object.entries(data).sort().forEach(([time, r]) => {
-    labels.push(time);
-    wl.push(r.water_level ?? 0);
-    rise.push(r.rise_rate ?? 0);
-    fall.push(r.fall_rate ?? 0);
+  /* ==========================
+     REALTIME + MARKER + SIDEBAR
+  ========================== */
+  const stationsRef = ref(db, "stations");
+  const stationListEl = document.getElementById("stationList");
+  const searchBox = document.getElementById("searchBox");
+  const historyStationSelect = document.getElementById("historyStation");
 
-    currentHistoryRows.push({
-      date,
-      time,
-      water_level: r.water_level ?? 0,
-      road_flood: r.road_flood ?? 0,
-      rise_rate: r.rise_rate ?? 0,
-      fall_rate: r.fall_rate ?? 0,
-      over_sidewalk: r.over_sidewalk ?? 0,
-      flood_duration: r.flood_duration ?? 0,
+  let currentStations = {};
+  let activeStationId = null;
+  let openedPopupStation = null; // ⭐ popup đang mở
+
+  const markers = {};
+
+  function createOrUpdateMarker(id, s) {
+    const meta = {
+      name: s.name || STATION_META[id]?.name || id,
+      address: s.address || STATION_META[id]?.address || "",
+      lat: s.lat ?? STATION_META[id]?.lat,
+      lng: s.lng ?? STATION_META[id]?.lng
+    };
+
+    const status = makeStatus(s.water_level ?? 0);
+
+    let color = "green";
+    if (status.label === "Ngập nhẹ")  color = "blue";
+    else if (status.label === "Ngập vừa")  color = "orange";
+    else if (status.label === "Ngập nặng") color = "red";
+
+    const icon = L.icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-" +
+        color + ".png",
+      iconSize: [25,41],
+      iconAnchor: [12,41],
+      popupAnchor: [1,-34]
+    });
+
+    if (!markers[id]) {
+      markers[id] = L.marker([meta.lat, meta.lng], { icon }).addTo(map);
+      markers[id].on("click", () => showStationPopup(id));
+      markers[id].on("popupclose", () => {
+        if (openedPopupStation === id) openedPopupStation = null;
+      });
+    } else {
+      markers[id].setLatLng([meta.lat, meta.lng]);
+      markers[id].setIcon(icon);
+    }
+  }
+
+  function buildSidebar(stationsMap) {
+    stationListEl.innerHTML = "";
+    historyStationSelect.innerHTML = "";
+
+    Object.entries(stationsMap).forEach(([id, s]) => {
+      const meta = {
+        name: s.name || STATION_META[id]?.name || id,
+        address: s.address || STATION_META[id]?.address || ""
+      };
+      const st = makeStatus(s.water_level ?? 0);
+
+      const div = document.createElement("div");
+      div.className = "station-item";
+      div.dataset.id = id;
+
+      div.innerHTML = `
+        <div class="station-name">${meta.name}</div>
+        <div class="station-id">${id}</div>
+        <div class="chip">
+          <span class="chip-label">Mực nước:</span>
+          <span class="${st.className}">${s.water_level ?? 0} cm – ${st.label}</span>
+        </div>
+      `;
+
+      div.onclick = () => {
+        activeStationId = id;
+        focusStation(id);
+      };
+
+      stationListEl.appendChild(div);
+
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `${meta.name} (${id})`;
+      historyStationSelect.appendChild(opt);
+    });
+
+    highlightSidebarActive();
+  }
+
+  function highlightSidebarActive() {
+    document.querySelectorAll(".station-item").forEach(el => {
+      el.classList.toggle("active", el.dataset.id === activeStationId);
+    });
+  }
+
+  function focusStation(id) {
+    const s = currentStations[id];
+    if (!s) return;
+
+    const meta = {
+      name: s.name || STATION_META[id]?.name || id,
+      lat: s.lat ?? STATION_META[id]?.lat,
+      lng: s.lng ?? STATION_META[id]?.lng
+    };
+
+    map.setView([meta.lat, meta.lng], 17, { animate: true });
+    showStationPopup(id);
+    highlightSidebarActive();
+  }
+
+  function showStationPopup(id) {
+    const s = currentStations[id];
+    if (!s) return;
+
+    openedPopupStation = id; // ⭐ lưu trạm đang mở popup
+
+    const meta = {
+      name: s.name || STATION_META[id]?.name || id,
+      address: s.address || STATION_META[id]?.address || "",
+      lat: s.lat ?? STATION_META[id]?.lat,
+      lng: s.lng ?? STATION_META[id]?.lng
+    };
+
+    const water = s.water_level ?? 0;
+    const road  = s.road_flood ?? water;
+    const rise  = s.rise_rate ?? 0;
+    const fall  = s.fall_rate ?? 0;
+    const dur   = s.flood_duration ?? 0;
+    const over  = Number(s.over_sidewalk) === 1;
+
+    const status = makeStatus(water);
+
+    const html = `
+      <div class="popup-card">
+        <div class="popup-title">${meta.name}</div>
+        <div class="popup-sub">${meta.address}</div>
+        <div class="popup-chip">${water} cm – ${status.label}</div>
+        <div class="popup-row">🌊 Mực nước <b>${water} cm</b></div>
+        <div class="popup-row">🚧 Ngập mặt đường <b>${road} cm</b></div>
+        <div class="popup-row">
+          🟥 Tràn lề
+          <b style="color:${over ? "#f97373" : "#4ade80"};">${over ? "CÓ" : "Không"}</b>
+        </div>
+        <div class="popup-row">📈 Tốc độ dâng <b>${rise.toFixed(2)} cm/phút</b></div>
+        <div class="popup-row">📉 Tốc độ rút <b>${fall.toFixed(2)} cm/phút</b></div>
+        <div class="popup-row">⏱ Thời gian ngập <b>${dur.toFixed(1)} phút</b></div>
+        <a class="popup-link"
+           target="_blank"
+           href="https://maps.google.com/?q=${meta.lat},${meta.lng}">
+           📍 Mở trên Google Maps
+        </a>
+      </div>
+    `;
+
+    markers[id].bindPopup(html).openPopup();
+  }
+
+  /* ==========================
+     REALTIME LISTENER
+  ========================== */
+  onValue(stationsRef, snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    currentStations = data;
+
+    Object.entries(data).forEach(([id, s]) => {
+      createOrUpdateMarker(id, s);
+    });
+
+    if (!activeStationId) {
+      const firstId = Object.keys(data)[0];
+      if (firstId) activeStationId = firstId;
+    }
+
+    buildSidebar(data);
+    updateHeatmap(data);
+
+    // ⭐ Nếu popup đang mở → refresh nội dung theo số liệu mới
+    if (openedPopupStation && currentStations[openedPopupStation]) {
+      showStationPopup(openedPopupStation);
+    }
+  });
+
+  /* ==========================
+     SEARCH FILTER
+  ========================== */
+  searchBox.addEventListener("input", () => {
+    const q = searchBox.value.trim().toLowerCase();
+    document.querySelectorAll(".station-item").forEach(el => {
+      const id = el.dataset.id.toLowerCase();
+      const s  = currentStations[el.dataset.id] || {};
+      const name = (s.name || STATION_META[el.dataset.id]?.name || "").toLowerCase();
+
+      el.style.display =
+        !q || id.includes(q) || name.includes(q) ? "" : "none";
     });
   });
 
-  drawHistoryChart(labels, wl, rise, fall, `Mực nước ngày ${date}`);
+  /* ==========================
+     TABS (MAP / HISTORY)
+  ========================== */
+  const tabMap = document.getElementById("tabMap");
+  const tabHistory = document.getElementById("tabHistory");
+  const historyPanel = document.getElementById("historyPanel");
 
-  currentHistoryStationName =
-    currentStations[stId]?.name ||
-    STATION_META[stId]?.name ||
-    stId;
-}
-
-btnLoadHistory.onclick = loadHistoryDay;
-
-
-/* ======================
-   CHART RENDER
-====================== */
-function drawHistoryChart(labels, wl, rise, fall, title) {
-  const ctx = historyChartCanvas.getContext("2d");
-
-  if (historyChart) historyChart.destroy();
-
-  const textMain = getComputedStyle(document.body)
-                    .getPropertyValue("--text-main");
-
-  const textSub  = getComputedStyle(document.body)
-                    .getPropertyValue("--text-sub");
-
-  historyChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Mực nước (cm)",
-          data: wl,
-          borderColor: "#3b82f6",
-          backgroundColor: "rgba(59,130,246,0.15)",
-          tension: 0.25,
-          yAxisID: "y1"
-        },
-        {
-          label: "Dâng (cm/phút)",
-          data: rise,
-          borderColor: "#ef4444",
-          backgroundColor: "rgba(239,68,68,0.15)",
-          tension: 0.25,
-          yAxisID: "y2"
-        },
-        {
-          label: "Rút (cm/phút)",
-          data: fall,
-          borderColor: "#22c55e",
-          backgroundColor: "rgba(34,197,94,0.12)",
-          tension: 0.25,
-          yAxisID: "y2"
-        }
-      ]
-    },
-
-    options: {
-      responsive: true,
-      interaction: { mode: "index", intersect: false },
-
-      plugins: {
-        legend: {
-          labels: {
-            color: textMain,
-            font: { size: 11 }
-          }
-        },
-        title: {
-          display: true,
-          text: title,
-          color: textMain,
-          font: { size: 14 }
-        }
-      },
-
-      scales: {
-        x: {
-          ticks: { color: textSub, maxTicksLimit: 8 }
-        },
-        y1: {
-          position: "left",
-          ticks: { color: "#3b82f6" },
-          title: { display: true, text: "Mực nước", color: "#3b82f6" }
-        },
-        y2: {
-          position: "right",
-          grid: { drawOnChartArea: false },
-          ticks: { color: "#22c55e" },
-          title: { display: true, text: "Tốc độ", color: "#22c55e" }
-        }
-      }
+  function setTab(name) {
+    if (name === "map") {
+      tabMap.classList.add("active");
+      tabHistory.classList.remove("active");
+      historyPanel.style.display = "none";
+    } else {
+      tabHistory.classList.add("active");
+      tabMap.classList.remove("active");
+      historyPanel.style.display = "block";
+      setTimeout(() => map.invalidateSize(), 200);
     }
-  });
-}
-
-
-/* ======================
-   RANGE: 7 & 30 DAYS
-====================== */
-async function loadRangeDays(daysBack) {
-  const stId = historyStationSelect.value;
-
-  if (!stId) {
-    alert("Chọn trạm trước.");
-    return;
   }
 
-  const labels = [];
-  const wl = [];
-  currentHistoryRows = [];
+  tabMap.onclick = () => setTab("map");
+  tabHistory.onclick = () => setTab("history");
+  setTab("map");
 
-  const end = new Date();
+  /* ==========================
+     HISTORY + CHARTJS + EXPORT
+  ========================== */
+  const historyDateInput = document.getElementById("historyDate");
+  const btnLoadHistory   = document.getElementById("btnLoadHistory");
+  const btnToday         = document.getElementById("btnToday");
+  const btn7d            = document.getElementById("btn7d");
+  const btn30d           = document.getElementById("btn30d");
+  const btnCsv           = document.getElementById("btnCsv");
+  const btnPdf           = document.getElementById("btnPdf");
+  const historyChartCanvas = document.getElementById("historyChart");
 
-  for (let i = 0; i < daysBack; i++) {
-    const d = new Date(end);
-    d.setDate(end.getDate() - i);
+  let historyChart = null;
+  let currentHistoryRows = [];
+  let currentHistoryStationName = "";
 
-    const dateStr = d.toISOString().slice(0, 10);
-    const snap = await get(child(ref(db), `history/${stId}/${dateStr}`));
+  function setToday() {
+    const d = new Date();
+    historyDateInput.value = d.toISOString().slice(0, 10);
+  }
+  btnToday.onclick = setToday;
+  setToday();
 
+  async function loadHistoryDay() {
+    const stId = historyStationSelect.value;
+    const date = historyDateInput.value;
+
+    if (!stId || !date) {
+      alert("Vui lòng chọn trạm và ngày.");
+      return;
+    }
+
+    const snap = await get(child(ref(db), `history/${stId}/${date}`));
     const data = snap.val();
-    if (!data) continue;
+
+    if (!data) {
+      alert("Không có dữ liệu trong ngày này.");
+      if (historyChart) historyChart.destroy();
+      currentHistoryRows = [];
+      return;
+    }
+
+    const labels = [];
+    const wl = [];
+    const rise = [];
+    const fall = [];
+    currentHistoryRows = [];
 
     Object.entries(data).sort().forEach(([time, r]) => {
-      const ts = `${dateStr} ${time}`;
-      labels.push(ts);
+      labels.push(time);
       wl.push(r.water_level ?? 0);
+      rise.push(r.rise_rate ?? 0);
+      fall.push(r.fall_rate ?? 0);
 
       currentHistoryRows.push({
-        date: dateStr,
+        date,
         time,
         water_level: r.water_level ?? 0,
         road_flood: r.road_flood ?? 0,
         rise_rate: r.rise_rate ?? 0,
         fall_rate: r.fall_rate ?? 0,
         over_sidewalk: r.over_sidewalk ?? 0,
-        flood_duration: r.flood_duration ?? 0,
+        flood_duration: r.flood_duration ?? 0
       });
+    });
+
+    drawHistoryChart(labels, wl, rise, fall, `Mực nước ngày ${date}`);
+    currentHistoryStationName =
+      currentStations[stId]?.name || STATION_META[stId]?.name || stId;
+  }
+
+  btnLoadHistory.onclick = loadHistoryDay;
+
+  function drawHistoryChart(labels, wl, rise, fall, title) {
+    const ctx = historyChartCanvas.getContext("2d");
+    if (historyChart) historyChart.destroy();
+
+    const textMain = getComputedStyle(document.body)
+      .getPropertyValue("--text-main");
+    const textSub  = getComputedStyle(document.body)
+      .getPropertyValue("--text-sub");
+
+    historyChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Mực nước (cm)",
+            data: wl,
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.15)",
+            tension: 0.25,
+            yAxisID: "y1"
+          },
+          {
+            label: "Dâng (cm/phút)",
+            data: rise,
+            borderColor: "#ef4444",
+            backgroundColor: "rgba(239,68,68,0.15)",
+            tension: 0.25,
+            yAxisID: "y2"
+          },
+          {
+            label: "Rút (cm/phút)",
+            data: fall,
+            borderColor: "#22c55e",
+            backgroundColor: "rgba(34,197,94,0.12)",
+            tension: 0.25,
+            yAxisID: "y2"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              color: textMain,
+              font: { size: 11 }
+            }
+          },
+          title: {
+            display: true,
+            text: title,
+            color: textMain,
+            font: { size: 14 }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: textSub, maxTicksLimit: 8 }
+          },
+          y1: {
+            ticks: { color: "#3b82f6" },
+            title: { display: true, text: "Mực nước", color: "#3b82f6" }
+          },
+          y2: {
+            position: "right",
+            grid: { drawOnChartArea: false },
+            ticks: { color: "#22c55e" },
+            title: { display: true, text: "Tốc độ", color: "#22c55e" }
+          }
+        }
+      }
     });
   }
 
-  if (!labels.length) {
-    alert(`Không có dữ liệu trong ${daysBack} ngày.`);
-    if (historyChart) historyChart.destroy();
-    return;
+  async function loadRangeDays(daysBack) {
+    const stId = historyStationSelect.value;
+    if (!stId) {
+      alert("Chọn trạm trước.");
+      return;
+    }
+
+    const labels = [];
+    const wl = [];
+    currentHistoryRows = [];
+    const end = new Date();
+
+    for (let i = 0; i < daysBack; i++) {
+      const d = new Date(end);
+      d.setDate(end.getDate() - i);
+      const dateStr = d.toISOString().slice(0,10);
+
+      const snap = await get(child(ref(db), `history/${stId}/${dateStr}`));
+      const data = snap.val();
+      if (!data) continue;
+
+      Object.entries(data).sort().forEach(([time, r]) => {
+        const ts = `${dateStr} ${time}`;
+        labels.push(ts);
+        wl.push(r.water_level ?? 0);
+
+        currentHistoryRows.push({
+          date: dateStr,
+          time,
+          water_level: r.water_level ?? 0,
+          road_flood: r.road_flood ?? 0,
+          rise_rate: r.rise_rate ?? 0,
+          fall_rate: r.fall_rate ?? 0,
+          over_sidewalk: r.over_sidewalk ?? 0,
+          flood_duration: r.flood_duration ?? 0
+        });
+      });
+    }
+
+    if (!labels.length) {
+      alert(`Không có dữ liệu trong ${daysBack} ngày.`);
+      if (historyChart) historyChart.destroy();
+      return;
+    }
+
+    drawHistoryChart(labels, wl, [], [], `Mực nước ${daysBack} ngày`);
+    currentHistoryStationName =
+      currentStations[stId]?.name || STATION_META[stId]?.name || stId;
   }
 
-  drawHistoryChart(labels, wl, [], [], `Mực nước ${daysBack} ngày`);
+  btn7d.onclick  = () => loadRangeDays(7);
+  btn30d.onclick = () => loadRangeDays(30);
 
-  currentHistoryStationName =
-    currentStations[stId]?.name ||
-    STATION_META[stId]?.name ||
-    stId;
-}
+  btnCsv.onclick = () => {
+    if (!currentHistoryRows.length) {
+      alert("Không có dữ liệu để xuất.");
+      return;
+    }
+    const stId = historyStationSelect.value;
+    let csv = "date,time,water_level,road_flood,rise_rate,fall_rate,over_sidewalk,flood_duration\n";
+    currentHistoryRows.forEach(r => {
+      csv += `${r.date},${r.time},${r.water_level},${r.road_flood},${r.rise_rate},${r.fall_rate},${r.over_sidewalk},${r.flood_duration}\n`;
+    });
 
-btn7d.onclick = () => loadRangeDays(7);
-btn30d.onclick = () => loadRangeDays(30);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url;
+    a.download = `history_${stId}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
+  btnPdf.onclick = () => {
+    if (!currentHistoryRows.length || !historyChart) {
+      alert("Không có dữ liệu để xuất PDF.");
+      return;
+    }
+    const stId = historyStationSelect.value;
+    const date = historyDateInput.value || "range";
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("p", "mm", "a4");
 
-/* ======================
-   EXPORT CSV
-====================== */
-btnCsv.onclick = () => {
-  if (!currentHistoryRows.length) {
-    alert("Không có dữ liệu để xuất.");
-    return;
-  }
+    doc.setFontSize(16);
+    doc.text("BÁO CÁO MỰC NƯỚC", 10, 12);
 
-  const stId = historyStationSelect.value;
+    const stationName = currentHistoryStationName || stId;
+    doc.setFontSize(12);
+    doc.text(`Trạm: ${stationName} (${stId})`, 10, 22);
+    doc.text(`Thời gian: ${date}`, 10, 28);
 
-  let csv = "date,time,water_level,road_flood,rise_rate,fall_rate,over_sidewalk,flood_duration\n";
-  currentHistoryRows.forEach(r => {
-    csv += `${r.date},${r.time},${r.water_level},${r.road_flood},${r.rise_rate},${r.fall_rate},${r.over_sidewalk},${r.flood_duration}\n`;
-  });
+    const img = historyChartCanvas.toDataURL("image/png", 1.0);
+    doc.addImage(img, "PNG", 10, 35, 190, 80);
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+    const levels = currentHistoryRows.map(r => r.water_level);
+    const max = Math.max(...levels);
+    const min = Math.min(...levels);
+    const avg = levels.reduce((a,b)=>a+b,0)/levels.length;
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `history_${stId}.csv`;
-  a.click();
+    doc.text(`Mực nước cao nhất: ${max.toFixed(1)} cm`, 10, 125);
+    doc.text(`Mực nước thấp nhất: ${min.toFixed(1)} cm`, 10, 131);
+    doc.text(`Mực nước trung bình: ${avg.toFixed(1)} cm`, 10, 137);
+    doc.text(`Tổng số bản ghi: ${currentHistoryRows.length}`, 10, 143);
 
-  URL.revokeObjectURL(url);
-};
-
-
-/* ======================
-   EXPORT PDF
-====================== */
-btnPdf.onclick = () => {
-  if (!currentHistoryRows.length || !historyChart) {
-    alert("Không có dữ liệu để xuất PDF.");
-    return;
-  }
-
-  const stId = historyStationSelect.value;
-  const date = historyDateInput.value || "range";
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("p", "mm", "a4");
-
-  doc.setFontSize(16);
-  doc.text("BÁO CÁO MỰC NƯỚC", 10, 12);
-
-  doc.setFontSize(12);
-  doc.text(`Trạm: ${currentHistoryStationName} (${stId})`, 10, 22);
-  doc.text(`Thời gian: ${date}`, 10, 28);
-
-  const img = historyChartCanvas.toDataURL("image/png", 1.0);
-  doc.addImage(img, "PNG", 10, 35, 190, 90);
-
-  const levels = currentHistoryRows.map(r => r.water_level);
-  const max = Math.max(...levels);
-  const min = Math.min(...levels);
-  const avg = levels.reduce((a, b) => a + b, 0) / levels.length;
-
-  doc.text(`Mực nước cao nhất: ${max.toFixed(1)} cm`, 10, 130);
-  doc.text(`Mực nước thấp nhất: ${min.toFixed(1)} cm`, 10, 136);
-  doc.text(`Trung bình: ${avg.toFixed(1)} cm`, 10, 142);
-  doc.text(`Tổng số bản ghi: ${currentHistoryRows.length}`, 10, 148);
-
-  doc.save(`report_${stId}_${date}.pdf`);
-};
+    doc.save(`report_${stId}_${date}.pdf`);
+  };
 
 </script>
 
 </body>
 </html>
-<!-- END PART 3/3 -->
