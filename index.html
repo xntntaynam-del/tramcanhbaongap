@@ -767,28 +767,29 @@
      REALTIME LISTENER
   ========================== */
   onValue(stationsRef, snap => {
-    const data = snap.val();
-    if (!data) return;
+  const data = snap.val();
+  if (!data) return;
 
-    currentStations = data;
+  currentStations = data;
 
-    Object.entries(data).forEach(([id, s]) => {
-      createOrUpdateMarker(id, s);
-    });
-
-    if (!activeStationId) {
-      const firstId = Object.keys(data)[0];
-      if (firstId) activeStationId = firstId;
-    }
-
-    buildSidebar(data);
-    updateHeatmap(data);
-
-    // ⭐ Nếu popup đang mở → refresh nội dung theo số liệu mới
-    if (openedPopupStation && currentStations[openedPopupStation]) {
-      showStationPopup(openedPopupStation);
-    }
+  Object.entries(data).forEach(([id, s]) => {
+    createOrUpdateMarker(id, s);
   });
+
+  buildSidebar(data);
+  updateHeatmap(data);
+
+  // ⭐ FIX 1: Cập nhật popup realtime
+  if (openedPopupStation && currentStations[openedPopupStation]) {
+    showStationPopup(openedPopupStation);
+  }
+
+  // ⭐ FIX 2: redraw lại toàn bộ marker icons
+  Object.values(markers).forEach(m => m._icon?.classList.add("leaflet-marker-pan"));
+
+  // ⭐ FIX 3: buộc Leaflet vẽ lại map khi dữ liệu thay đổi
+  map.invalidateSize();
+});
 
   /* ==========================
      SEARCH FILTER
