@@ -390,27 +390,6 @@
       color: #93c5fd;
     }
 
-html, body {
-  height: 100%;
-}
-
-#map-container {
-  position: relative;
-  flex: 1;
-  height: calc(100vh - 48px);
-  min-height: 300px;
-}
-
-#map {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  width: 100%;
-  z-index: 1;
-}
-
-
-
     body[data-theme="light"] .popup-link {
       color: #2563eb;
     }
@@ -1109,11 +1088,6 @@ html, body {
     doc.save(`report_${stId}_${date}.pdf`);
   };
 
-
-// FIX MAP KHÔNG HIỆN
-setTimeout(() => map.invalidateSize(true), 300);
-window.addEventListener("load", () => map.invalidateSize(true));
-window.addEventListener("resize", () => map.invalidateSize(true));
 </script>
 
 </body>
