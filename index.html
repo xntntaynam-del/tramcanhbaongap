@@ -13,9 +13,6 @@
   <style>
     * { box-sizing: border-box; }
 
-    /* ======================
-       THEME VARIABLES
-    ====================== */
     :root {
       --bg-main: #050816;
       --bg-sidebar: #0b1220;
@@ -46,9 +43,6 @@
       --shadow-soft: 0 18px 40px rgba(15,23,42,0.15);
     }
 
-    /* ======================
-       BODY + LAYOUT
-    ====================== */
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -70,9 +64,6 @@
       grid-template-columns: 0 1fr;
     }
 
-    /* ======================
-       SIDEBAR
-    ====================== */
     #sidebar {
       background: var(--bg-sidebar);
       border-right: 1px solid var(--border-soft);
@@ -179,9 +170,6 @@
       margin-top: 5px;
     }
 
-    /* ======================
-       SIDEBAR COLLAPSE BUTTON
-    ====================== */
     #sidebarToggle {
       position: absolute;
       top: 50%;
@@ -209,9 +197,6 @@
       border-radius: 999px 0 0 999px;
     }
 
-    /* ======================
-       MAIN + TOPBAR
-    ====================== */
     #main {
       display: flex;
       flex-direction: column;
@@ -255,12 +240,47 @@
       cursor: pointer;
     }
 
-    #map-container { position: relative; flex: 1; }
-    #map { position: absolute; inset: 0; z-index: 1; }
+    html, body {
+      height: 100%;
+    }
 
-    /* ======================
-       HISTORY PANEL
-    ====================== */
+    #map-container {
+      position: relative;
+      flex: 1;
+      height: calc(100vh - 48px);
+      min-height: 300px;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .popup-card {
+      width: 260px;
+      padding: 12px 14px 10px;
+      border-radius: 18px;
+      background: linear-gradient(145deg,#0f172a,#020617);
+      color: #e5e7eb;
+      font-size: 13px;
+    }
+
+    body[data-theme="light"] .popup-card {
+      background: linear-gradient(145deg,#ffffff,#f3f4f6);
+      color: #111827;
+    }
+
+    .popup-title { font-weight: 700; font-size: 14px; }
+    .popup-sub { font-size: 11px; color: #9ca3af; margin-bottom: 6px; }
+    .popup-chip { display:inline-block; padding:3px 8px; background:rgba(148,163,184,0.15); font-size:11px; border-radius:999px; }
+    .popup-row { font-size:12px; margin:2px 0; }
+    .popup-row b { float:right; }
+    .popup-link { font-size:12px; text-decoration:none; color:#93c5fd; }
+    body[data-theme="light"] .popup-link { color:#2563eb; }
+
     #historyPanel {
       position: absolute;
       left: 12px;
@@ -276,133 +296,26 @@
       box-shadow: var(--shadow-soft);
     }
 
-    #historyPanel h3 {
-      margin: 0 0 8px;
-      font-size: 15px;
+    #historyPanel h3 { margin: 0 0 8px; font-size: 15px; }
+    .panel-row { display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+    .panel-row select, .panel-row input[type="date"] {
+      flex:1; padding:4px 8px; background:rgba(15,23,42,0.15);
+      border-radius:10px; border:1px solid var(--border-soft);
+      color:var(--text-main); font-size:12px;
     }
-
-    .panel-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 6px;
-      flex-wrap: wrap;
-    }
-
-    .panel-row select,
-    .panel-row input[type="date"] {
-      flex: 1;
-      padding: 4px 8px;
-      background: rgba(15,23,42,0.15);
-      border-radius: 10px;
-      border: 1px solid var(--border-soft);
-      color: var(--text-main);
-      font-size: 12px;
-    }
-
-    body[data-theme="light"] .panel-row select,
-    body[data-theme="light"] .panel-row input[type="date"] {
-      background: #ffffff;
-    }
-
-    .small-btn {
-      padding: 4px 8px;
-      font-size: 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border-soft);
-      background: rgba(15,23,42,0.2);
-      color: var(--text-main);
-      cursor: pointer;
-    }
-
-    body[data-theme="light"] .small-btn {
-      background: #ffffff;
-    }
+    .small-btn { padding:4px 8px; font-size:12px; border-radius:999px; border:1px solid var(--border-soft); cursor:pointer; }
 
     canvas {
       background: rgba(15,23,42,0.9);
       border-radius: 12px;
       margin-top: 8px;
     }
-
-    body[data-theme="light"] canvas {
-      background: #f9fafb;
-    }
-
-    .panel-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    /* ======================
-       POPUP CARD
-    ====================== */
-    .popup-card {
-      width: 260px;
-      padding: 12px 14px 10px;
-      border-radius: 18px;
-      background: linear-gradient(145deg,#0f172a,#020617);
-      color: #e5e7eb;
-      font-size: 13px;
-    }
-
-    body[data-theme="light"] .popup-card {
-      background: linear-gradient(145deg,#ffffff,#f3f4f6);
-      color: #111827;
-    }
-
-    .popup-title {
-      font-weight: 700;
-      font-size: 14px;
-      margin-bottom: 2px;
-    }
-
-    .popup-sub {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-bottom: 6px;
-    }
-
-    .popup-chip {
-      display: inline-block;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(148,163,184,0.15);
-      margin-bottom: 6px;
-    }
-
-    .popup-row {
-      font-size: 12px;
-      margin: 2px 0;
-    }
-
-    .popup-row b {
-      float: right;
-    }
-
-    .popup-link {
-      display: inline-block;
-      margin-top: 8px;
-      font-size: 12px;
-      text-decoration: none;
-      color: #93c5fd;
-    }
-
-    body[data-theme="light"] .popup-link {
-      color: #2563eb;
-    }
   </style>
 </head>
 
 <body data-theme="dark">
-
 <div class="layout" id="layout">
 
-  <!-- ======================
-       SIDEBAR
-  ====================== -->
   <aside id="sidebar">
     <div>
       <div class="brand">Trạm cảm biến báo ngập</div>
@@ -423,14 +336,8 @@
     </div>
   </aside>
 
-  <!-- ======================
-       SIDEBAR TOGGLE BUTTON
-  ====================== -->
   <div id="sidebarToggle">⮜</div>
 
-  <!-- ======================
-       MAIN
-  ====================== -->
   <main id="main">
 
     <div id="topbar">
@@ -475,13 +382,11 @@
   </main>
 </div>
 
-<!-- LIBS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<!-- MAIN APP -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
   import {
@@ -492,9 +397,6 @@
     child
   } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-  /* ==========================
-     THEME SWITCH
-  ========================== */
   const body = document.body;
   const btnTheme = document.getElementById("btnTheme");
   const savedTheme = localStorage.getItem("ngap-theme");
@@ -512,9 +414,6 @@
     updateThemeButton();
   });
 
-  /* ==========================
-     FIREBASE CONFIG
-  ========================== */
   const firebaseConfig = {
     apiKey: "AIzaSyC2aoNSms-fOf0jjAeIwxmE-X1RfPlvEL4",
     authDomain: "tram-do-1.firebaseapp.com",
@@ -528,9 +427,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  /* ==========================
-     STATION META
-  ========================== */
   const STATION_META = {
     station01: {
       name: "Trạm 01 - QL50",
@@ -538,7 +434,6 @@
       lat: 10.77563018246902,
       lng: 106.65557870049943
     }
-    // có thể thêm station02, station03...
   };
 
   function makeStatus(waterCm) {
@@ -548,9 +443,6 @@
     return { label: "Ngập nặng", className: "status-heavy" };
   }
 
-  /* ==========================
-     MAP + TILE
-  ========================== */
   const map = L.map("map", { zoomControl: true })
                .setView([10.77563018246902, 106.65557870049943], 16);
 
@@ -559,9 +451,6 @@
     attribution: "&copy; OpenStreetMap"
   }).addTo(map);
 
-  /* ==========================
-     HEATMAP
-  ========================== */
   let heatmapEnabled = false;
   const heatLayer = L.heatLayer([], {
     radius: 35,
@@ -594,9 +483,6 @@
     updateHeatmap(currentStations);
   });
 
-  /* ==========================
-     SIDEBAR COLLAPSE
-  ========================== */
   const layout = document.getElementById("layout");
   const sidebarToggle = document.getElementById("sidebarToggle");
   sidebarToggle.onclick = () => {
@@ -605,9 +491,6 @@
     setTimeout(() => map.invalidateSize(), 300);
   };
 
-  /* ==========================
-     REALTIME + MARKER + SIDEBAR
-  ========================== */
   const stationsRef = ref(db, "stations");
   const stationListEl = document.getElementById("stationList");
   const searchBox = document.getElementById("searchBox");
@@ -615,7 +498,7 @@
 
   let currentStations = {};
   let activeStationId = null;
-  let openedPopupStation = null; // ⭐ popup đang mở
+  let openedPopupStation = null;
 
   const markers = {};
 
@@ -720,7 +603,7 @@
     const s = currentStations[id];
     if (!s) return;
 
-    openedPopupStation = id; // ⭐ lưu trạm đang mở popup
+    openedPopupStation = id;
 
     const meta = {
       name: s.name || STATION_META[id]?.name || id,
@@ -763,52 +646,26 @@
     markers[id].bindPopup(html).openPopup();
   }
 
-  /* ==========================
-     REALTIME LISTENER
-  ========================== */
   onValue(stationsRef, snap => {
-  const data = snap.val();
-  if (!data) return;
+    const data = snap.val();
+    if (!data) return;
 
-  currentStations = data;
+    currentStations = data;
 
-  Object.entries(data).forEach(([id, s]) => {
-    createOrUpdateMarker(id, s);
-  });
-
-  buildSidebar(data);
-  updateHeatmap(data);
-
-  // ⭐ FIX 1: Cập nhật popup realtime
-  if (openedPopupStation && currentStations[openedPopupStation]) {
-    showStationPopup(openedPopupStation);
-  }
-
-  // ⭐ FIX 2: redraw lại toàn bộ marker icons
-  Object.values(markers).forEach(m => m._icon?.classList.add("leaflet-marker-pan"));
-
-  // ⭐ FIX 3: buộc Leaflet vẽ lại map khi dữ liệu thay đổi
-  map.invalidateSize();
-});
-
-  /* ==========================
-     SEARCH FILTER
-  ========================== */
-  searchBox.addEventListener("input", () => {
-    const q = searchBox.value.trim().toLowerCase();
-    document.querySelectorAll(".station-item").forEach(el => {
-      const id = el.dataset.id.toLowerCase();
-      const s  = currentStations[el.dataset.id] || {};
-      const name = (s.name || STATION_META[el.dataset.id]?.name || "").toLowerCase();
-
-      el.style.display =
-        !q || id.includes(q) || name.includes(q) ? "" : "none";
+    Object.entries(data).forEach(([id, s]) => {
+      createOrUpdateMarker(id, s);
     });
+
+    buildSidebar(data);
+    updateHeatmap(data);
+
+    if (openedPopupStation && currentStations[openedPopupStation]) {
+      showStationPopup(openedPopupStation);
+    }
+
+    map.invalidateSize();
   });
 
-  /* ==========================
-     TABS (MAP / HISTORY)
-  ========================== */
   const tabMap = document.getElementById("tabMap");
   const tabHistory = document.getElementById("tabHistory");
   const historyPanel = document.getElementById("historyPanel");
@@ -830,17 +687,14 @@
   tabHistory.onclick = () => setTab("history");
   setTab("map");
 
-  /* ==========================
-     HISTORY + CHARTJS + EXPORT
-  ========================== */
-  const historyDateInput = document.getElementById("historyDate");
-  const btnLoadHistory   = document.getElementById("btnLoadHistory");
-  const btnToday         = document.getElementById("btnToday");
-  const btn7d            = document.getElementById("btn7d");
-  const btn30d           = document.getElementById("btn30d");
-  const btnCsv           = document.getElementById("btnCsv");
-  const btnPdf           = document.getElementById("btnPdf");
-  const historyChartCanvas = document.getElementById("historyChart");
+  const historyDateInput     = document.getElementById("historyDate");
+  const btnLoadHistory       = document.getElementById("btnLoadHistory");
+  const btnToday             = document.getElementById("btnToday");
+  const btn7d                = document.getElementById("btn7d");
+  const btn30d               = document.getElementById("btn30d");
+  const btnCsv               = document.getElementById("btnCsv");
+  const btnPdf               = document.getElementById("btnPdf");
+  const historyChartCanvas   = document.getElementById("historyChart");
 
   let historyChart = null;
   let currentHistoryRows = [];
@@ -873,9 +727,9 @@
     }
 
     const labels = [];
-    const wl = [];
-    const rise = [];
-    const fall = [];
+    const wl    = [];
+    const rise  = [];
+    const fall  = [];
     currentHistoryRows = [];
 
     Object.entries(data).sort().forEach(([time, r]) => {
@@ -887,12 +741,12 @@
       currentHistoryRows.push({
         date,
         time,
-        water_level: r.water_level ?? 0,
-        road_flood: r.road_flood ?? 0,
-        rise_rate: r.rise_rate ?? 0,
-        fall_rate: r.fall_rate ?? 0,
-        over_sidewalk: r.over_sidewalk ?? 0,
-        flood_duration: r.flood_duration ?? 0
+        water_level:     r.water_level     ?? 0,
+        road_flood:      r.road_flood      ?? 0,
+        rise_rate:       r.rise_rate       ?? 0,
+        fall_rate:       r.fall_rate       ?? 0,
+        over_sidewalk:   r.over_sidewalk   ?? 0,
+        flood_duration:  r.flood_duration  ?? 0
       });
     });
 
@@ -987,14 +841,14 @@
     }
 
     const labels = [];
-    const wl = [];
+    const wl     = [];
     currentHistoryRows = [];
     const end = new Date();
 
     for (let i = 0; i < daysBack; i++) {
       const d = new Date(end);
       d.setDate(end.getDate() - i);
-      const dateStr = d.toISOString().slice(0,10);
+      const dateStr = d.toISOString().slice(0, 10);
 
       const snap = await get(child(ref(db), `history/${stId}/${dateStr}`));
       const data = snap.val();
@@ -1006,13 +860,13 @@
         wl.push(r.water_level ?? 0);
 
         currentHistoryRows.push({
-          date: dateStr,
+          date:           dateStr,
           time,
-          water_level: r.water_level ?? 0,
-          road_flood: r.road_flood ?? 0,
-          rise_rate: r.rise_rate ?? 0,
-          fall_rate: r.fall_rate ?? 0,
-          over_sidewalk: r.over_sidewalk ?? 0,
+          water_level:    r.water_level    ?? 0,
+          road_flood:     r.road_flood     ?? 0,
+          rise_rate:      r.rise_rate      ?? 0,
+          fall_rate:      r.fall_rate      ?? 0,
+          over_sidewalk:  r.over_sidewalk  ?? 0,
           flood_duration: r.flood_duration ?? 0
         });
       });
@@ -1038,7 +892,8 @@
       return;
     }
     const stId = historyStationSelect.value;
-    let csv = "date,time,water_level,road_flood,rise_rate,fall_rate,over_sidewalk,flood_duration\n";
+    let csv =
+      "date,time,water_level,road_flood,rise_rate,fall_rate,over_sidewalk,flood_duration\n";
     currentHistoryRows.forEach(r => {
       csv += `${r.date},${r.time},${r.water_level},${r.road_flood},${r.rise_rate},${r.fall_rate},${r.over_sidewalk},${r.flood_duration}\n`;
     });
@@ -1088,6 +943,9 @@
     doc.save(`report_${stId}_${date}.pdf`);
   };
 
+  setTimeout(() => map.invalidateSize(true), 300);
+  window.addEventListener("load", () => map.invalidateSize(true));
+  window.addEventListener("resize", () => map.invalidateSize(true));
 </script>
 
 </body>
