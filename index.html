@@ -179,9 +179,6 @@
       margin-top: 5px;
     }
 
-    /* ======================
-       SIDEBAR COLLAPSE BUTTON
-    ====================== */
     #sidebarToggle {
       position: absolute;
       top: 50%;
@@ -255,12 +252,53 @@
       cursor: pointer;
     }
 
-    #map-container { position: relative; flex: 1; }
-    #map { position: absolute; inset: 0; z-index: 1; }
-
     /* ======================
-       HISTORY PANEL
+       MAP CONTAINER
     ====================== */
+    html, body {
+      height: 100%;
+    }
+
+    #map-container {
+      position: relative;
+      flex: 1;
+      height: calc(100vh - 48px);
+      min-height: 300px;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    /* POPUP CARD */
+    .popup-card {
+      width: 260px;
+      padding: 12px 14px 10px;
+      border-radius: 18px;
+      background: linear-gradient(145deg,#0f172a,#020617);
+      color: #e5e7eb;
+      font-size: 13px;
+    }
+
+    body[data-theme="light"] .popup-card {
+      background: linear-gradient(145deg,#ffffff,#f3f4f6);
+      color: #111827;
+    }
+
+    .popup-title { font-weight: 700; font-size: 14px; }
+    .popup-sub { font-size: 11px; color: #9ca3af; margin-bottom: 6px; }
+    .popup-chip { display:inline-block; padding:3px 8px; background:rgba(148,163,184,0.15); font-size:11px; border-radius:999px; }
+    .popup-row { font-size:12px; margin:2px 0; }
+    .popup-row b { float:right; }
+    .popup-link { font-size:12px; text-decoration:none; color:#93c5fd; }
+
+    body[data-theme="light"] .popup-link { color:#2563eb; }
+
+    /* HISTORY PANEL */
     #historyPanel {
       position: absolute;
       left: 12px;
@@ -276,149 +314,24 @@
       box-shadow: var(--shadow-soft);
     }
 
-    #historyPanel h3 {
-      margin: 0 0 8px;
-      font-size: 15px;
+    #historyPanel h3 { margin: 0 0 8px; font-size: 15px; }
+    .panel-row { display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+    .panel-row select, .panel-row input[type="date"] {
+      flex:1; padding:4px 8px; background:rgba(15,23,42,0.15);
+      border-radius:10px; border:1px solid var(--border-soft);
+      color:var(--text-main); font-size:12px;
     }
-
-    .panel-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 6px;
-      flex-wrap: wrap;
-    }
-
-    .panel-row select,
-    .panel-row input[type="date"] {
-      flex: 1;
-      padding: 4px 8px;
-      background: rgba(15,23,42,0.15);
-      border-radius: 10px;
-      border: 1px solid var(--border-soft);
-      color: var(--text-main);
-      font-size: 12px;
-    }
-
-    body[data-theme="light"] .panel-row select,
-    body[data-theme="light"] .panel-row input[type="date"] {
-      background: #ffffff;
-    }
-
-    .small-btn {
-      padding: 4px 8px;
-      font-size: 12px;
-      border-radius: 999px;
-      border: 1px solid var(--border-soft);
-      background: rgba(15,23,42,0.2);
-      color: var(--text-main);
-      cursor: pointer;
-    }
-
-    body[data-theme="light"] .small-btn {
-      background: #ffffff;
-    }
+    .small-btn { padding:4px 8px; font-size:12px; border-radius:999px; border:1px solid var(--border-soft); cursor:pointer; }
 
     canvas {
       background: rgba(15,23,42,0.9);
       border-radius: 12px;
       margin-top: 8px;
     }
-
-    body[data-theme="light"] canvas {
-      background: #f9fafb;
-    }
-
-    .panel-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    /* ======================
-       POPUP CARD
-    ====================== */
-    .popup-card {
-      width: 260px;
-      padding: 12px 14px 10px;
-      border-radius: 18px;
-      background: linear-gradient(145deg,#0f172a,#020617);
-      color: #e5e7eb;
-      font-size: 13px;
-    }
-
-    body[data-theme="light"] .popup-card {
-      background: linear-gradient(145deg,#ffffff,#f3f4f6);
-      color: #111827;
-    }
-
-    .popup-title {
-      font-weight: 700;
-      font-size: 14px;
-      margin-bottom: 2px;
-    }
-
-    .popup-sub {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-bottom: 6px;
-    }
-
-    .popup-chip {
-      display: inline-block;
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(148,163,184,0.15);
-      margin-bottom: 6px;
-    }
-
-    .popup-row {
-      font-size: 12px;
-      margin: 2px 0;
-    }
-
-    .popup-row b {
-      float: right;
-    }
-
-    .popup-link {
-      display: inline-block;
-      margin-top: 8px;
-      font-size: 12px;
-      text-decoration: none;
-      color: #93c5fd;
-    }
-
-html, body {
-  height: 100%;
-}
-
-#map-container {
-  position: relative;
-  flex: 1;
-  height: calc(100vh - 48px);
-  min-height: 300px;
-}
-
-#map {
-  position: absolute;
-  inset: 0;
-  height: 100%;
-  width: 100%;
-  z-index: 1;
-}
-
-
-
-    body[data-theme="light"] .popup-link {
-      color: #2563eb;
-    }
   </style>
 </head>
 
 <body data-theme="dark">
-
 <div class="layout" id="layout">
 
   <!-- ======================
@@ -636,7 +549,7 @@ html, body {
 
   let currentStations = {};
   let activeStationId = null;
-  let openedPopupStation = null; // ⭐ popup đang mở
+  let openedPopupStation = null;
 
   const markers = {};
 
@@ -741,7 +654,7 @@ html, body {
     const s = currentStations[id];
     if (!s) return;
 
-    openedPopupStation = id; // ⭐ lưu trạm đang mở popup
+    openedPopupStation = id;
 
     const meta = {
       name: s.name || STATION_META[id]?.name || id,
@@ -788,29 +701,24 @@ html, body {
      REALTIME LISTENER
   ========================== */
   onValue(stationsRef, snap => {
-  const data = snap.val();
-  if (!data) return;
+    const data = snap.val();
+    if (!data) return;
 
-  currentStations = data;
+    currentStations = data;
 
-  Object.entries(data).forEach(([id, s]) => {
-    createOrUpdateMarker(id, s);
+    Object.entries(data).forEach(([id, s]) => {
+      createOrUpdateMarker(id, s);
+    });
+
+    buildSidebar(data);
+    updateHeatmap(data);
+
+    if (openedPopupStation && currentStations[openedPopupStation]) {
+      showStationPopup(openedPopupStation);
+    }
+
+    map.invalidateSize();
   });
-
-  buildSidebar(data);
-  updateHeatmap(data);
-
-  // ⭐ FIX 1: Cập nhật popup realtime
-  if (openedPopupStation && currentStations[openedPopupStation]) {
-    showStationPopup(openedPopupStation);
-  }
-
-  // ⭐ FIX 2: redraw lại toàn bộ marker icons
-  Object.values(markers).forEach(m => m._icon?.classList.add("leaflet-marker-pan"));
-
-  // ⭐ FIX 3: buộc Leaflet vẽ lại map khi dữ liệu thay đổi
-  map.invalidateSize();
-});
 
   /* ==========================
      SEARCH FILTER
@@ -850,18 +758,18 @@ html, body {
   tabMap.onclick = () => setTab("map");
   tabHistory.onclick = () => setTab("history");
   setTab("map");
-
-  /* ==========================
+<script type="module">
+   /* ==========================
      HISTORY + CHARTJS + EXPORT
   ========================== */
-  const historyDateInput = document.getElementById("historyDate");
-  const btnLoadHistory   = document.getElementById("btnLoadHistory");
-  const btnToday         = document.getElementById("btnToday");
-  const btn7d            = document.getElementById("btn7d");
-  const btn30d           = document.getElementById("btn30d");
-  const btnCsv           = document.getElementById("btnCsv");
-  const btnPdf           = document.getElementById("btnPdf");
-  const historyChartCanvas = document.getElementById("historyChart");
+  const historyDateInput     = document.getElementById("historyDate");
+  const btnLoadHistory       = document.getElementById("btnLoadHistory");
+  const btnToday             = document.getElementById("btnToday");
+  const btn7d                = document.getElementById("btn7d");
+  const btn30d               = document.getElementById("btn30d");
+  const btnCsv               = document.getElementById("btnCsv");
+  const btnPdf               = document.getElementById("btnPdf");
+  const historyChartCanvas   = document.getElementById("historyChart");
 
   let historyChart = null;
   let currentHistoryRows = [];
@@ -894,9 +802,9 @@ html, body {
     }
 
     const labels = [];
-    const wl = [];
-    const rise = [];
-    const fall = [];
+    const wl    = [];
+    const rise  = [];
+    const fall  = [];
     currentHistoryRows = [];
 
     Object.entries(data).sort().forEach(([time, r]) => {
@@ -908,12 +816,12 @@ html, body {
       currentHistoryRows.push({
         date,
         time,
-        water_level: r.water_level ?? 0,
-        road_flood: r.road_flood ?? 0,
-        rise_rate: r.rise_rate ?? 0,
-        fall_rate: r.fall_rate ?? 0,
-        over_sidewalk: r.over_sidewalk ?? 0,
-        flood_duration: r.flood_duration ?? 0
+        water_level:     r.water_level     ?? 0,
+        road_flood:      r.road_flood      ?? 0,
+        rise_rate:       r.rise_rate       ?? 0,
+        fall_rate:       r.fall_rate       ?? 0,
+        over_sidewalk:   r.over_sidewalk   ?? 0,
+        flood_duration:  r.flood_duration  ?? 0
       });
     });
 
@@ -1008,14 +916,14 @@ html, body {
     }
 
     const labels = [];
-    const wl = [];
+    const wl     = [];
     currentHistoryRows = [];
     const end = new Date();
 
     for (let i = 0; i < daysBack; i++) {
       const d = new Date(end);
       d.setDate(end.getDate() - i);
-      const dateStr = d.toISOString().slice(0,10);
+      const dateStr = d.toISOString().slice(0, 10);
 
       const snap = await get(child(ref(db), `history/${stId}/${dateStr}`));
       const data = snap.val();
@@ -1027,13 +935,13 @@ html, body {
         wl.push(r.water_level ?? 0);
 
         currentHistoryRows.push({
-          date: dateStr,
+          date:           dateStr,
           time,
-          water_level: r.water_level ?? 0,
-          road_flood: r.road_flood ?? 0,
-          rise_rate: r.rise_rate ?? 0,
-          fall_rate: r.fall_rate ?? 0,
-          over_sidewalk: r.over_sidewalk ?? 0,
+          water_level:    r.water_level    ?? 0,
+          road_flood:     r.road_flood     ?? 0,
+          rise_rate:      r.rise_rate      ?? 0,
+          fall_rate:      r.fall_rate      ?? 0,
+          over_sidewalk:  r.over_sidewalk  ?? 0,
           flood_duration: r.flood_duration ?? 0
         });
       });
@@ -1053,13 +961,17 @@ html, body {
   btn7d.onclick  = () => loadRangeDays(7);
   btn30d.onclick = () => loadRangeDays(30);
 
+  /* ==========================
+     EXPORT CSV
+  ========================== */
   btnCsv.onclick = () => {
     if (!currentHistoryRows.length) {
       alert("Không có dữ liệu để xuất.");
       return;
     }
     const stId = historyStationSelect.value;
-    let csv = "date,time,water_level,road_flood,rise_rate,fall_rate,over_sidewalk,flood_duration\n";
+    let csv =
+      "date,time,water_level,road_flood,rise_rate,fall_rate,over_sidewalk,flood_duration\n";
     currentHistoryRows.forEach(r => {
       csv += `${r.date},${r.time},${r.water_level},${r.road_flood},${r.rise_rate},${r.fall_rate},${r.over_sidewalk},${r.flood_duration}\n`;
     });
@@ -1075,6 +987,9 @@ html, body {
     URL.revokeObjectURL(url);
   };
 
+  /* ==========================
+     EXPORT PDF
+  ========================== */
   btnPdf.onclick = () => {
     if (!currentHistoryRows.length || !historyChart) {
       alert("Không có dữ liệu để xuất PDF.");
@@ -1109,12 +1024,15 @@ html, body {
     doc.save(`report_${stId}_${date}.pdf`);
   };
 
-
-// FIX MAP KHÔNG HIỆN
-setTimeout(() => map.invalidateSize(true), 300);
-window.addEventListener("load", () => map.invalidateSize(true));
-window.addEventListener("resize", () => map.invalidateSize(true));
+  /* ==========================
+     FIX MAP KHÔNG HIỆN / CO GIÃN
+  ========================== */
+  setTimeout(() => map.invalidateSize(true), 300);
+  window.addEventListener("load", () => map.invalidateSize(true));
+  window.addEventListener("resize", () => map.invalidateSize(true));
 </script>
 
 </body>
 </html>
+
+
