@@ -355,6 +355,14 @@
       margin-top: 6px;
     }
 
+    /* Khối tóm tắt mưa/ngập dưới biểu đồ */
+    #historySummary {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
     /* ======================
        POPUP CARD
     ====================== */
@@ -498,6 +506,9 @@
         </div>
 
         <canvas id="historyChart" height="220"></canvas>
+
+        <!-- Tóm tắt 4 mốc thời gian -->
+        <div id="historySummary"></div>
 
         <div class="panel-footer">
           <button class="small-btn" id="btnCsv">Xuất CSV</button>
@@ -799,7 +810,6 @@
       </div>
     `;
 
-    // Mỗi lần mở đều bind lại popup để chắc chắn hoạt động
     markers[id].unbindPopup();
     markers[id].bindPopup(html);
     markers[id].openPopup();
@@ -821,7 +831,6 @@
     buildSidebar(data);
     updateHeatmap(data);
 
-    // Nếu đang mở popup cho 1 trạm thì cập nhật nội dung realtime
     if (openedPopupStation && currentStations[openedPopupStation]) {
       showStationPopup(openedPopupStation);
     }
@@ -879,10 +888,18 @@
   const btnCsv           = document.getElementById("btnCsv");
   const btnPdf           = document.getElementById("btnPdf");
   const historyChartCanvas = document.getElementById("historyChart");
+  const historySummaryEl   = document.getElementById("historySummary");
 
   let historyChart = null;
   let currentHistoryRows = [];
   let currentHistoryStationName = "";
+
+  // Kích thước khu vực ngập (m)
+  const FLOOD_WIDTH_M  = 6;
+  const FLOOD_LENGTH_M = 10;
+
+  // Lưu tóm tắt mưa/ngập để dùng cho PDF
+  let currentFloodSummary = null;
 
   function setToday() {
     const d = new Date();
@@ -890,6 +907,85 @@
   }
   btnToday.onclick = setToday;
   setToday();
+
+  // ===== Phân tích lịch sử để lấy 4 mốc thời gian =====
+  function analyzeFloodSummary(rows) {
+    if (!rows.length) return null;
+
+    // sắp xếp theo thời gian tăng dần YYYY-MM-DD HH:MM
+    const sorted = [...rows].sort((a, b) => {
+      const ta = a.date + " " + a.time;
+      const tb = b.date + " " + b.time;
+      if (ta < tb) return -1;
+      if (ta > tb) return 1;
+      return 0;
+    });
+
+    const ZERO_THRESHOLD = 0.5;  // ~ 0cm coi như khô
+    const FLOOD_THRESHOLD = 5;   // >=5cm coi như bắt đầu ngập (đúng logic bạn đặt status)
+
+    let startRain  = null;
+    let endRain    = null;
+    let startFlood = null;
+    let endFlood   = null;
+    let prevLevel  = 0;
+    let maxDepth   = 0;
+
+    sorted.forEach(r => {
+      const w = r.water_level ?? 0;
+      const tsLabel = `${r.date} ${r.time}`;
+
+      if (w > ZERO_THRESHOLD && prevLevel <= ZERO_THRESHOLD && !startRain) {
+        startRain = tsLabel;
+      }
+
+      if (w >= FLOOD_THRESHOLD && prevLevel < FLOOD_THRESHOLD && !startFlood) {
+        startFlood = tsLabel;
+      }
+
+      if (w <= ZERO_THRESHOLD && prevLevel > ZERO_THRESHOLD) {
+        endRain = tsLabel;
+      }
+
+      if (w < FLOOD_THRESHOLD && prevLevel >= FLOOD_THRESHOLD && !endFlood) {
+        endFlood = tsLabel;
+      }
+
+      if (w > maxDepth) maxDepth = w;
+
+      prevLevel = w;
+    });
+
+    return {
+      startRain,
+      endRain,
+      startFlood,
+      endFlood,
+      maxDepth
+    };
+  }
+
+  function updateHistorySummaryUI() {
+    if (!currentHistoryRows.length) {
+      historySummaryEl.textContent = "Không có dữ liệu để phân tích mưa/ngập.";
+      return;
+    }
+
+    if (!currentFloodSummary) {
+      historySummaryEl.textContent = "Không đủ dữ liệu để xác định chu kỳ mưa/ngập.";
+      return;
+    }
+
+    const s = currentFloodSummary;
+
+    historySummaryEl.innerHTML = `
+      <b>1. Thời gian bắt đầu mưa:</b> ${s.startRain || "Không xác định"}<br>
+      <b>2. Thời gian bắt đầu ngập:</b> ${s.startFlood || "Không xác định"}
+      <br>&nbsp;&nbsp;&nbsp;&nbsp;(Chiều dài ${FLOOD_LENGTH_M} m, chiều rộng ${FLOOD_WIDTH_M} m, chiều sâu tối đa ${s.maxDepth.toFixed(1)} cm)<br>
+      <b>3. Thời gian hết mưa:</b> ${s.endRain || "Không xác định"}<br>
+      <b>4. Thời gian hết ngập:</b> ${s.endFlood || "Không xác định"}
+    `;
+  }
 
   async function loadHistoryDay() {
     const stId = historyStationSelect.value;
@@ -907,6 +1003,8 @@
       alert("Không có dữ liệu trong ngày này.");
       if (historyChart) historyChart.destroy();
       currentHistoryRows = [];
+      currentFloodSummary = null;
+      updateHistorySummaryUI();
       return;
     }
 
@@ -937,6 +1035,9 @@
     drawHistoryChart(labels, wl, rise, fall, `Mực nước ngày ${date}`);
     currentHistoryStationName =
       currentStations[stId]?.name || STATION_META[stId]?.name || stId;
+
+    currentFloodSummary = analyzeFloodSummary(currentHistoryRows);
+    updateHistorySummaryUI();
   }
 
   btnLoadHistory.onclick = loadHistoryDay;
@@ -1059,12 +1160,17 @@
     if (!labels.length) {
       alert(`Không có dữ liệu trong ${daysBack} ngày.`);
       if (historyChart) historyChart.destroy();
+      currentFloodSummary = null;
+      updateHistorySummaryUI();
       return;
     }
 
     drawHistoryChart(labels, wl, [], [], `Mực nước ${daysBack} ngày`);
     currentHistoryStationName =
       currentStations[stId]?.name || STATION_META[stId]?.name || stId;
+
+    currentFloodSummary = analyzeFloodSummary(currentHistoryRows);
+    updateHistorySummaryUI();
   }
 
   btn7d.onclick  = () => loadRangeDays(7);
@@ -1113,15 +1219,37 @@
     const img = historyChartCanvas.toDataURL("image/png", 1.0);
     doc.addImage(img, "PNG", 10, 35, 190, 80);
 
+    // ===== 4 thông tin mưa/ngập =====
+    doc.setFontSize(11);
+    let y = 125;
+
+    if (currentFloodSummary) {
+      const s = currentFloodSummary;
+      doc.text(`1. Bắt đầu mưa: ${s.startRain || "Không xác định"}`, 10, y);       y += 6;
+      doc.text(`2. Bắt đầu ngập: ${s.startFlood || "Không xác định"}`, 10, y);     y += 6;
+      doc.text(
+        `   (Dài ${FLOOD_LENGTH_M} m, Rộng ${FLOOD_WIDTH_M} m, Sâu tối đa ${s.maxDepth.toFixed(1)} cm)`,
+        10,
+        y
+      );
+      y += 8;
+      doc.text(`3. Hết mưa: ${s.endRain || "Không xác định"}`, 10, y);            y += 6;
+      doc.text(`4. Hết ngập: ${s.endFlood || "Không xác định"}`, 10, y);          y += 10;
+    } else {
+      doc.text("Không đủ dữ liệu để xác định chu kỳ mưa/ngập.", 10, y);
+      y += 10;
+    }
+
+    // ===== Thống kê mực nước cũ =====
     const levels = currentHistoryRows.map(r => r.water_level);
     const max = Math.max(...levels);
     const min = Math.min(...levels);
     const avg = levels.reduce((a,b)=>a+b,0)/levels.length;
 
-    doc.text(`Mực nước cao nhất: ${max.toFixed(1)} cm`, 10, 125);
-    doc.text(`Mực nước thấp nhất: ${min.toFixed(1)} cm`, 10, 131);
-    doc.text(`Mực nước trung bình: ${avg.toFixed(1)} cm`, 10, 137);
-    doc.text(`Tổng số bản ghi: ${currentHistoryRows.length}`, 10, 143);
+    doc.text(`Mực nước cao nhất: ${max.toFixed(1)} cm`, 10, y);        y += 6;
+    doc.text(`Mực nước thấp nhất: ${min.toFixed(1)} cm`, 10, y);       y += 6;
+    doc.text(`Mực nước trung bình: ${avg.toFixed(1)} cm`, 10, y);      y += 6;
+    doc.text(`Tổng số bản ghi: ${currentHistoryRows.length}`, 10, y);
 
     doc.save(`report_${stId}_${date}.pdf`);
   };
