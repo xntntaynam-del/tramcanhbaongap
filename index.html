@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trạm cảm biến báo ngập và triều – Realtime</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <!-- Roboto (web) -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    * { box-sizing: border-box; }
+
+    .warning-chip {
+      display: inline-block;
+      background: #fde68a;
+      color: #92400e;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 999px;
+      margin: 6px 0;
+    }
+
+    /* ======================
+       THEME VARIABLES
+    ====================== */
+   :root {
+  /* ===== iOS Light Theme ===== */
+  --bg-main: #F2F4F7;
+  --bg-sidebar: #FFFFFF;
+  --bg-topbar: rgba(255,255,255,0.80);
+  --bg-card: #FFFFFF;
+  --bg-chip: #F2F2F7;
+
+  --border-soft: rgba(0,0,0,0.12);
+
+  --text-main: #1C1C1E;      /* iOS Black */
+  --text-sub: #8E8E93;       /* iOS Gray 2 */
+
+  --accent-blue: #007AFF;    /* iOS Blue */
+  --accent-green: #34C759;   /* iOS Green */
+  --accent-red: #FF3B30;     /* iOS Red */
+
+  --radius-large: 18px;       /* bo góc kiểu iOS */
+  --shadow-soft: 0 6px 20px rgba(0,0,0,0.08);
+
+  --blur: blur(14px);         /* iOS blur */
+}
+
+
+    /* ======================
+       BODY + LAYOUT
+    ====================== */
+    body {
+      margin: 0;
+      font-family: "Roboto", system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: 100vh;
+      transition: grid-template-columns .25s ease-out;
+      position: relative;
+    }
+
+    .layout.sidebar-collapsed {
+      grid-template-columns: 0 1fr;
+    }
+
+    /* ======================
+       SIDEBAR
+    ====================== */
+    #sidebar {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-soft);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+      overflow-y: auto;
+      transition: .25s;
+      font-size: 13px;
+    }
+
+    .brand {
+      font-size: 25px;
+      font-weight: 500;
+      margin-bottom: 5px;
+      color: #00BFFF;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(15,23,42,0.1);
+      color: var(--text-main);
+      font-size: 13px;
+    }
+
+    .search-box::placeholder {
+      color: var(--text-sub);
+    }
+
+    .sidebar-section-title {
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-sub);
+      margin-top: 10px;
+    }
+
+    .station-list {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 7px;
+    }
+
+    .station-item {
+      background: var(--bg-card);
+      border-radius: 14px;
+      padding: 10px;
+      margin-bottom: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all .15s ease-out;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      font-size: 17px;
+    }
+
+    .station-item:hover {
+      border-color: var(--accent-blue);
+      transform: translateY(-1px);
+    }
+
+    .station-item.active {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 5px rgba(59,130,246,0.5);
+    }
+
+    .station-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .station-id {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      font-size: 13px;
+     
+      border-radius: 999px;
+      background: var(--bg-chip);
+      margin-top: 6px;
+      border: 1px solid var(--border-soft);
+    }
+
+    .chip-label { margin-right: 6px; color: var(--text-sub); }
+
+    .status-safe { color: #4ade80; }
+    .status-light { color: #4ade80;font-size: 13px; }
+    .status-medium { color: #eab308; }
+    .status-heavy { color: #f97373; }
+
+    .sidebar-footer {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 5px;
+    }
+
+    /* ======================
+       SIDEBAR COLLAPSE BUTTON
+    ====================== */
+    #sidebarToggle {
+      position: absolute;
+      top: 50%;
+      left: 320px;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 60px;
+      background: var(--bg-topbar);
+      border-radius: 0 999px 999px 0;
+      border: 1px solid var(--border-soft);
+      border-left: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      z-index: 1000;
+      color: var(--text-main);
+      font-size: 16px;
+      transition: .25s;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .layout.sidebar-collapsed #sidebarToggle {
+      left: 0;
+      border-radius: 999px 0 0 999px;
+    }
+
+    /* ======================
+       MAIN + TOPBAR
+    ====================== */
+    #main {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    #topbar {
+      height: 48px;
+      background: var(--bg-topbar);
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      backdrop-filter: blur(25px);
+      z-index: 10;
+      font-size: 13px;
+    }
+
+    .tab-btn {
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .pill-btn {
+      border-radius: 999px;
+      font-size: 13px;
+      padding: 6px 12px;
+      border: 1px solid var(--border-soft);
+      background: rgba(15,23,42,0.2);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    #map-container { position: relative; flex: 1; }
+    #map { position: absolute; inset: 0; z-index: 1; }
+
+    /* ======================
+       HISTORY PANEL
+    ====================== */
+    #historyPanel {
+      position: absolute;
+color: #008B8B;
+      left: 12px;
+      bottom: 12px;
+      z-index: 1000;
+      width: 430px;
+      max-width: calc(100% - 24px);
+      background: var(--bg-card);
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border-soft);
+      display: none;
+      box-shadow: var(--shadow-soft);
+      font-size: 13px;
+    }
+
+    #historyPanel h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+
+    .panel-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+
+    .panel-row select,
+    .panel-row input[type="date"] {
+      flex: 1;
+      padding: 4px 8px;
+      background: rgba(15,23,42,0.15);
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      color: var(--text-main);
+      font-size: 13px;
+    }
+
+    body[data-theme="light"] .panel-row select,
+    body[data-theme="light"] .panel-row input[type="date"] {
+      background: #ffffff;
+    }
+
+    .small-btn {
+      padding: 4px 8px;
+      font-size: 13px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: rgba(15,23,42,0.2);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    body[data-theme="light"] .small-btn {
+      background: #ffffff;
+    }
+
+    
+
+    body[data-theme="light"] canvas {
+      background: #f9fafb;
+    }
+
+    .panel-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    /* HISTORY SUMMARY BOX */
+    #historySummary {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px dashed var(--border-soft);
+      background: rgba(15,23,42,0.35);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    body[data-theme="light"] #historySummary {
+      background: #f3f4f6;
+    }
+
+    .summary-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .summary-row {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .summary-row b {
+      font-weight: 600;
+    }
+
+    .summary-row.highlight {
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.4);
+    }
+
+    /* ======================
+       POPUP CARD
+    ====================== */
+    .popup-card {
+      width: 260px;
+      padding: 12px 14px 10px;
+      border-radius: 18px;
+      background: linear-gradient(145deg,#0f172a,#020617);
+      color: #e5e7eb;
+      font-size: 13px;
+    }
+
+    body[data-theme="light"] .popup-card {
+      background: linear-gradient(145deg,#ffffff,#f3f4f6);
+      color: #111827;
+    }
+
+    .popup-title {
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .popup-sub {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 6px;
+    }
+
+    .popup-chip {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.15);
+      margin-bottom: 6px;
+    }
+
+    .popup-row {
+      font-size: 13px;
+      margin: 2px 0;
+    }
+
+    .popup-row b {
+      float: right;
+    }
+
+    .popup-link {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 12px;
+      text-decoration: none;
+      color: #93c5fd;
+    }
+
+    body[data-theme="light"] .popup-link {
+      color: #2563eb;
+    }
+
+
+
+  </style>
+</head>
+
+<body data-theme="dark">
+
+<div class="layout" id="layout">
+
+  <!-- ======================
+       SIDEBAR
+  ====================== -->
+  <aside id="sidebar">
+    <div>
+      <div class="brand">CÔNG TY TNHH MTV THOÁT NƯỚC ĐÔ THỊ TP.HỒ CHÍ MINH</div>
+      <div class="brand">Trạm cảm biến báo ngập và triều</div>
+      
+
+    <input
+      id="searchBox"
+      class="search-box"
+      placeholder="Tìm trạm theo tên hoặc ID..."
+    />
+
+    <div class="sidebar-section-title">Danh sách trạm</div>
+    <div id="stationList" class="QL50 - Nguyễn Văn Linh"></div>
+
+    <div class="sidebar-footer">
+      Thu nhỏ sidebar bằng nút mũi tên để bản đồ rộng hơn.
+    </div>
+  </aside>
+
+  <!-- ======================
+       SIDEBAR TOGGLE BUTTON
+  ====================== -->
+  <div id="sidebarToggle">⮜</div>
+
+  <!-- ======================
+       MAIN
+  ====================== -->
+  <main id="main">
+
+    <div id="topbar">
+      <div>
+        <button class="tab-btn active" id="tabMap">Bản đồ realtime</button>
+        <button class="tab-btn" id="tabHistory">Lịch sử & báo cáo</button>
+      </div>
+
+      <div>
+        <button class="pill-btn" id="btnHeatmap">🌈 Heatmap: OFF</button>
+        
+      </div>
+    </div>
+
+    <div id="map-container">
+      <div id="map"></div>
+
+      <div id="historyPanel">
+        <h3>Lịch sử mực nước</h3>
+
+        <div class="panel-row">
+          <select id="historyStation"></select>
+          <input type="date" id="historyDate" />
+        </div>
+
+        <div class="panel-row">
+          <button class="small-btn" id="btnLoadHistory">Tải ngày</button>
+          <button class="small-btn" id="btnToday">Hôm nay</button>
+          <button class="small-btn" id="btn7d">7 ngày</button>
+          <button class="small-btn" id="btn30d">30 ngày</button>
+        </div>
+
+        <canvas id="historyChart" height="220"></canvas>
+
+        <div id="historySummary"></div>
+
+        <div class="panel-footer">
+          <button class="small-btn" id="btnCsv">Xuất CSV</button>
+          <button class="small-btn" id="btnPdf">Xuất PDF</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- LIBS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- MAIN APP -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import {
+    getDatabase,
+    ref,
+    onValue,
+    get,
+    child
+  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+  /* ==========================
+     THEME SWITCH
+  ========================== */
+  
+  /* ==========================
+     FIREBASE CONFIG
+  ========================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyC2aoNSms-fOf0jjAeIwxmE-X1RfPlvEL4",
+    authDomain: "tram-do-1.firebaseapp.com",
+    databaseURL: "https://tram-do-1-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "tram-do-1",
+    storageBucket: "tram-do-1.appspot.com",
+    messagingSenderId: "1053488938946",
+    appId: "1:1053488938946:web:7f9f4dbc1aca8dffb7605b"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  /* ==========================
+     STATION META
+  ========================== */
+  const STATION_META = {
+    station01: {
+      name: "Trạm 01 - QL50",
+      address: "Quốc Lộ 50 - Bình Chánh",
+      lat: 10.77563018246902,
+      lng: 106.65557870049943
+    }
+    // thêm station02, station03... nếu có
+  };
+
+  function makeStatus(waterCm) {
+    if (waterCm < 5)  return { label: "An toàn",     className: "status-safe"   };
+    if (waterCm < 15) return { label: "Ngập nhẹ",   className: "status-light"  };
+    if (waterCm < 30) return { label: "Ngập vừa",   className: "status-medium" };
+    return { label: "Ngập nặng", className: "status-heavy" };
+  }
+
+  /* ==========================
+     MAP + TILE
+  ========================== */
+  const map = L.map("map", { zoomControl: true })
+               .setView([10.77563018246902, 106.65557870049943], 16);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
+
+  /* ==========================
+     HEATMAP
+  ========================== */
+  let heatmapEnabled = false;
+  const heatLayer = L.heatLayer([], {
+    radius: 35,
+    blur: 20,
+    maxZoom: 18
+  }).addTo(map);
+
+  function updateHeatmap(stationsMap) {
+    if (!heatmapEnabled) {
+      heatLayer.setLatLngs([]);
+      return;
+    }
+    const pts = [];
+    Object.entries(stationsMap).forEach(([id, s]) => {
+      const meta = STATION_META[id];
+      if (!meta) return;
+      const level = s.water_level ?? 0;
+      const intensity = Math.min(Math.max(level / 50, 0), 1);
+      pts.push([meta.lat, meta.lng, intensity]);
+    });
+    heatLayer.setLatLngs(pts);
+  }
+
+  const btnHeatmap = document.getElementById("btnHeatmap");
+  btnHeatmap.addEventListener("click", () => {
+    heatmapEnabled = !heatmapEnabled;
+    btnHeatmap.textContent = heatmapEnabled
+      ? "🌈 Heatmap: ON"
+      : "🌈 Heatmap: OFF";
+    updateHeatmap(currentStations);
+  });
+
+  /* ==========================
+     SIDEBAR COLLAPSE
+  ========================== */
+  const layout = document.getElementById("layout");
+  const sidebarToggle = document.getElementById("sidebarToggle");
+  sidebarToggle.onclick = () => {
+    const collapsed = layout.classList.toggle("sidebar-collapsed");
+    sidebarToggle.textContent = collapsed ? "⮞" : "⮜";
+    setTimeout(() => map.invalidateSize(), 300);
+  };
+
+  /* ==========================
+     REALTIME + MARKER + SIDEBAR
+  ========================== */
+  const stationsRef = ref(db, "stations");
+  const stationListEl = document.getElementById("stationList");
+  const searchBox = document.getElementById("searchBox");
+  const historyStationSelect = document.getElementById("historyStation");
+
+  let currentStations = {};
+  let activeStationId = null;
+  let openedPopupStation = null;
+
+  const markers = {};
+
+  function createOrUpdateMarker(id, s) {
+    const meta = {
+      name: s.name || STATION_META[id]?.name || id,
+      address: s.address || STATION_META[id]?.address || "",
+      lat: s.lat ?? STATION_META[id]?.lat,
+      lng: s.lng ?? STATION_META[id]?.lng
+    };
+
+    const status = makeStatus(s.water_level ?? 0);
+
+    let color = "green";
+    if (status.label === "Ngập nhẹ")  color = "blue";
+    else if (status.label === "Ngập vừa")  color = "orange";
+    else if (status.label === "Ngập nặng") color = "red";
+
+
+      const icon = L.icon({
+      iconUrl:
+        "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-" +
+        color + ".png",
+      iconSize: [25,41],
+      iconAnchor: [12,41],
+      popupAnchor: [1,-34]
+    });
+
+
+
+
+    if (!markers[id]) {
+      markers[id] = L.marker([meta.lat, meta.lng], { icon }).addTo(map);
+      markers[id].on("click", () => showStationPopup(id));
+      markers[id].on("popupclose", () => {
+        openedPopupStation = null;
+      });
+    } else {
+      markers[id].setLatLng([meta.lat, meta.lng]);
+      markers[id].setIcon(icon);
+    }
+  }
+
+  function buildSidebar(stationsMap) {
+    stationListEl.innerHTML = "";
+    historyStationSelect.innerHTML = "";
+
+    Object.entries(stationsMap).forEach(([id, s]) => {
+      const meta = {
+        name: s.name || STATION_META[id]?.name || id,
+        address: s.address || STATION_META[id]?.address || ""
+      };
+      const st = makeStatus(s.water_level ?? 0);
+
+      const div = document.createElement("div");
+      div.className = "station-item";
+      div.dataset.id = id;
+
+      div.innerHTML = `
+        <div class="station-name">${meta.name}</div>
+        <div class="station-id">${id}</div>
+        <div class="chip">
+          <span class="chip-label">Mực nước:</span>
+          <span class="${st.className}">${s.water_level ?? 0} cm – ${st.label}</span>
+        </div>
+      `;
+
+      div.onclick = () => {
+        activeStationId = id;
+        focusStation(id);
+      };
+
+      stationListEl.appendChild(div);
+
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `${meta.name} (${id})`;
+      historyStationSelect.appendChild(opt);
+    });
+
+    highlightSidebarActive();
+  }
+
+  function highlightSidebarActive() {
+    document.querySelectorAll(".station-item").forEach(el => {
+      el.classList.toggle("active", el.dataset.id === activeStationId);
+    });
+  }
+
+  function focusStation(id) {
+    const s = currentStations[id];
+    if (!s) return;
+
+    const meta = {
+      name: s.name || STATION_META[id]?.name || id,
+      lat: s.lat ?? STATION_META[id]?.lat,
+      lng: s.lng ?? STATION_META[id]?.lng
+    };
+
+    map.setView([meta.lat, meta.lng], 17, { animate: true });
+    showStationPopup(id);
+    highlightSidebarActive();
+  }
+
+  function showStationPopup(id) {
+    const s = currentStations[id];
+    if (!s) return;
+
+    openedPopupStation = id;
+
+    const meta = {
+      name: s.name || STATION_META[id]?.name || id,
+      address: s.address || STATION_META[id]?.address || "",
+      lat: s.lat ?? STATION_META[id]?.lat,
+      lng: s.lng ?? STATION_META[id]?.lng
+    };
+
+    const water = s.water_level ?? 0;
+    const road  = s.road_flood ?? water;
+    const rise  = s.rise_rate ?? 0;
+    const fall  = s.fall_rate ?? 0;
+    const dur   = s.flood_duration ?? 0;
+    const over  = Number(s.over_sidewalk) === 1;
+
+    const status = makeStatus(water);
+
+    const html = `
+      <div class="popup-card">
+        <div class="popup-title">${meta.name}</div>
+        <div class="popup-sub">${meta.address}</div>
+
+        <div class="warning-chip">
+          Mức ngập: ${water} cm – ${status.label}
+        </div>
+
+        <div class="popup-row">🌊 Mực nước <b>${water} cm</b></div>
+        <div class="popup-row">🚧 Ngập mặt đường <b>${road} cm</b></div>
+        <div class="popup-row">
+          🟥 Tràn lề
+          <b style="color:${over ? "#f97373" : "#4ade80"};">${over ? "CÓ" : "Không"}</b>
+        </div>
+        <div class="popup-row">📈 Tốc độ dâng <b>${rise.toFixed(2)} cm/phút</b></div>
+        <div class="popup-row">📉 Tốc độ rút <b>${fall.toFixed(2)} cm/phút</b></div>
+        <div class="popup-row">⏱ Thời gian ngập <b>${dur.toFixed(1)} phút</b></div>
+
+        <a class="popup-link"
+           target="_blank"
+           href="https://maps.google.com/?q=${meta.lat},${meta.lng}">
+           📍 Mở trên Google Maps
+        </a>
+      </div>
+    `;
+
+    markers[id].unbindPopup();
+    markers[id].bindPopup(html).openPopup();
+  }
+
+  /* ==========================
+     REALTIME LISTENER
+  ========================== */
+  onValue(stationsRef, snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    currentStations = data;
+
+    Object.entries(data).forEach(([id, s]) => {
+      createOrUpdateMarker(id, s);
+    });
+
+    buildSidebar(data);
+    updateHeatmap(data);
+
+    // ⭐ FIX POPUP TỰ CẬP NHẬT REALTIME ⭐
+if (openedPopupStation && currentStations[openedPopupStation]) {
+    const marker = markers[openedPopupStation];
+
+    if (marker && marker.getPopup && marker.getPopup()) {
+        // đóng popup cũ
+        marker.closePopup();
+
+        // gán lại nội dung mới
+        showStationPopup(openedPopupStation);
+
+        // mở lại popup
+        marker.openPopup();
+    }
+}
+
+
+    map.invalidateSize();
+  });
+
+  /* ==========================
+     SEARCH FILTER
+  ========================== */
+  searchBox.addEventListener("input", () => {
+    const q = searchBox.value.trim().toLowerCase();
+    document.querySelectorAll(".station-item").forEach(el => {
+      const id = el.dataset.id.toLowerCase();
+      const s  = currentStations[el.dataset.id] || {};
+      const name = (s.name || STATION_META[el.dataset.id]?.name || "").toLowerCase();
+
+      el.style.display =
+        !q || id.includes(q) || name.includes(q) ? "" : "none";
+    });
+  });
+
+  /* ==========================
+     TABS (MAP / HISTORY)
+  ========================== */
+  const tabMap = document.getElementById("tabMap");
+  const tabHistory = document.getElementById("tabHistory");
+  const historyPanel = document.getElementById("historyPanel");
+
+  function setTab(name) {
+    if (name === "map") {
+      tabMap.classList.add("active");
+      tabHistory.classList.remove("active");
+      historyPanel.style.display = "none";
+    } else {
+      tabHistory.classList.add("active");
+      tabMap.classList.remove("active");
+      historyPanel.style.display = "block";
+      setTimeout(() => map.invalidateSize(), 200);
+    }
+  }
+
+  tabMap.onclick = () => setTab("map");
+  tabHistory.onclick = () => setTab("history");
+  setTab("map");
+
+  /* ==========================
+     HISTORY + CHARTJS + SUMMARY + EXPORT
+  ========================== */
+  const historyDateInput = document.getElementById("historyDate");
+  const btnLoadHistory   = document.getElementById("btnLoadHistory");
+  const btnToday         = document.getElementById("btnToday");
+  const btn7d            = document.getElementById("btn7d");
+  const btn30d           = document.getElementById("btn30d");
+  const btnCsv           = document.getElementById("btnCsv");
+  const btnPdf           = document.getElementById("btnPdf");
+  const historyChartCanvas = document.getElementById("historyChart");
+  const historySummaryEl = document.getElementById("historySummary");
+
+  let historyChart = null;
+  let currentHistoryRows = [];
+  let currentHistoryStationName = "";
+  let currentFloodSummary = null;
+
+  function setToday() {
+    const d = new Date();
+    historyDateInput.value = d.toISOString().slice(0, 10);
+  }
+  btnToday.onclick = setToday;
+  setToday();
+
+  const FLOOD_LENGTH_M = 10; // chiều dài đoạn đường (m)
+  const FLOOD_WIDTH_M  = 6;  // chiều rộng đoạn đường (m)
+
+  function analyzeFloodSummary(rows) {
+    if (!rows.length) return null;
+
+    const enriched = rows
+      .map(r => {
+        const dtStr = `${r.date}T${r.time}:00`;
+        const t = new Date(dtStr.replace(" ", "T"));
+        return { ...r, _ts: t.getTime(), dtStr };
+      })
+      .filter(r => !Number.isNaN(r._ts))
+      .sort((a,b) => a._ts - b._ts);
+
+    if (!enriched.length) return null;
+
+    let firstAbove0 = null;
+    let lastAbove0  = null;
+    let firstAbove5 = null;
+    let lastAbove5  = null;
+
+    let maxDepth = -Infinity;
+    let sumDepth = 0;
+    let countDepth = 0;
+
+    enriched.forEach((r, idx) => {
+      const d = r.water_level ?? 0;
+
+      if (d > 0) {
+        if (!firstAbove0) firstAbove0 = r;
+        lastAbove0 = r;
+      }
+
+      if (d >= 5) {
+        if (!firstAbove5) firstAbove5 = r;
+        lastAbove5 = r;
+      }
+
+      if (d > 0) {
+        sumDepth += d;
+        countDepth++;
+        if (d > maxDepth) maxDepth = d;
+      }
+    });
+
+    if (countDepth === 0) return null;
+
+    const startRain  = firstAbove0 ? firstAbove0.dtStr.replace("T"," ") : null;
+    const endRain    = lastAbove0  ? lastAbove0.dtStr.replace("T"," ")  : null;
+    const startFlood = firstAbove5 ? firstAbove5.dtStr.replace("T"," ") : startRain;
+    const endFlood   = lastAbove5  ? lastAbove5.dtStr.replace("T"," ")  : endRain;
+
+    const startTs = firstAbove5 ? firstAbove5._ts : enriched[0]._ts;
+    const endTs   = lastAbove5  ? lastAbove5._ts  : enriched[enriched.length-1]._ts;
+    const totalDurationMin = (endTs - startTs) / 60000;
+
+    const avgDepth = sumDepth / countDepth;
+    const area_m2 = FLOOD_LENGTH_M * FLOOD_WIDTH_M;
+    const avgDepth_m = avgDepth / 100;
+    const volume_m3 = area_m2 * avgDepth_m;
+
+    return {
+      startRain,
+      endRain,
+      startFlood,
+      endFlood,
+      maxDepth: maxDepth === -Infinity ? 0 : maxDepth,
+      avgDepth: avgDepth || 0,
+      totalDurationMin: totalDurationMin > 0 ? totalDurationMin : 0,
+      area_m2,
+      volume_m3
+    };
+  }
+
+  function updateHistorySummaryUI(summary) {
+    const el = historySummaryEl;
+    el.innerHTML = "";
+
+    if (!summary) {
+      el.innerHTML = `
+        <div class="summary-card">
+          <div class="summary-title">Tóm tắt đợt ngập</div>
+          <div class="summary-row">Không có dữ liệu / không phát hiện ngập trong khoảng này.</div>
+        </div>
+      `;
+      return;
+    }
+
+    const s = summary;
+
+    el.innerHTML = `
+      <div class="summary-card">
+        <div class="summary-title">Tóm tắt đợt ngập chính</div>
+
+        <div class="summary-row highlight">
+          <b>1. Thời gian bắt đầu mưa:</b> ${s.startRain || "Không xác định"}<br>
+          <b>2. Thời gian bắt đầu ngập:</b> ${s.startFlood || "Không xác định"}<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;(Chiều dài ${FLOOD_LENGTH_M} m, chiều rộng ${FLOOD_WIDTH_M} m, chiều sâu tối đa ${s.maxDepth.toFixed(1)} cm)<br>
+          <b>3. Thời gian hết mưa:</b> ${s.endRain   || "Không xác định"}<br>
+          <b>4. Thời gian hết ngập:</b> ${s.endFlood || "Không xác định"}
+        </div>
+
+        <div class="summary-row">
+          <b>Độ sâu trung bình:</b> ${s.avgDepth.toFixed(1)} cm<br>
+          <b>Thời gian ngập liên tục:</b> ${s.totalDurationMin.toFixed(1)} phút<br>
+          <b>Thể tích nước ước tính:</b> ${s.volume_m3.toFixed(1)} m³ (diện tích ${s.area_m2.toFixed(1)} m²)
+        </div>
+      </div>
+    `;
+  }
+
+  async function loadHistoryDay() {
+    const stId = historyStationSelect.value;
+    const date = historyDateInput.value;
+
+    if (!stId || !date) {
+      alert("Vui lòng chọn trạm và ngày.");
+      return;
+    }
+
+    const snap = await get(child(ref(db), `history/${stId}/${date}`));
+    const data = snap.val();
+
+    if (!data) {
+      alert("Không có dữ liệu trong ngày này.");
+      if (historyChart) historyChart.destroy();
+      currentHistoryRows = [];
+      currentFloodSummary = null;
+      updateHistorySummaryUI(null);
+      return;
+    }
+
+    const labels = [];
+    const wl = [];
+    const rise = [];
+    const fall = [];
+    currentHistoryRows = [];
+
+    Object.entries(data).sort().forEach(([time, r]) => {
+      labels.push(time);
+      wl.push(r.water_level ?? 0);
+      rise.push(r.rise_rate ?? 0);
+      fall.push(r.fall_rate ?? 0);
+
+      currentHistoryRows.push({
+        date,
+        time,
+        water_level: r.water_level ?? 0,
+        road_flood: r.road_flood ?? 0,
+        rise_rate: r.rise_rate ?? 0,
+        fall_rate: r.fall_rate ?? 0,
+        over_sidewalk: r.over_sidewalk ?? 0,
+        flood_duration: r.flood_duration ?? 0
+      });
+    });
+
+    drawHistoryChart(labels, wl, rise, fall, `Mực nước ngày ${date}`);
+    currentHistoryStationName =
+      currentStations[stId]?.name || STATION_META[stId]?.name || stId;
+
+    currentFloodSummary = analyzeFloodSummary(currentHistoryRows);
+    updateHistorySummaryUI(currentFloodSummary);
+  }
+
+  btnLoadHistory.onclick = loadHistoryDay;
+
+  function drawHistoryChart(labels, wl, rise, fall, title) {
+    const ctx = historyChartCanvas.getContext("2d");
+    if (historyChart) historyChart.destroy();
+
+    const textMain = getComputedStyle(document.body)
+      .getPropertyValue("--text-main");
+    const textSub  = getComputedStyle(document.body)
+      .getPropertyValue("--text-sub");
+
+    historyChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Mực nước (cm)",
+            data: wl,
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.15)",
+            tension: 0.25,
+            yAxisID: "y1"
+          },
+          {
+            label: "Dâng (cm/phút)",
+            data: rise,
+            borderColor: "#ef4444",
+            backgroundColor: "rgba(239,68,68,0.15)",
+            tension: 0.25,
+            yAxisID: "y2"
+          },
+          {
+            label: "Rút (cm/phút)",
+            data: fall,
+            borderColor: "#22c55e",
+            backgroundColor: "rgba(34,197,94,0.12)",
+            tension: 0.25,
+            yAxisID: "y2"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              color: textMain,
+              font: { size: 11 }
+            }
+          },
+          title: {
+            display: true,
+            text: title,
+            color: textMain,
+            font: { size: 14 }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: textSub, maxTicksLimit: 8 }
+          },
+          y1: {
+            ticks: { color: "#3b82f6" },
+            title: { display: true, text: "Mực nước", color: "#3b82f6" }
+          },
+          y2: {
+            position: "right",
+            grid: { drawOnChartArea: false },
+            ticks: { color: "#22c55e" },
+            title: { display: true, text: "Tốc độ", color: "#22c55e" }
+          }
+        }
+      }
+    });
+  }
+
+  async function loadRangeDays(daysBack) {
+    const stId = historyStationSelect.value;
+    if (!stId) {
+      alert("Chọn trạm trước.");
+      return;
+    }
+
+    const labels = [];
+    const wl = [];
+    currentHistoryRows = [];
+    const end = new Date();
+
+    for (let i = 0; i < daysBack; i++) {
+      const d = new Date(end);
+      d.setDate(end.getDate() - i);
+      const dateStr = d.toISOString().slice(0,10);
+
+      const snap = await get(child(ref(db), `history/${stId}/${dateStr}`));
+      const data = snap.val();
+      if (!data) continue;
+
+      Object.entries(data).sort().forEach(([time, r]) => {
+        const ts = `${dateStr} ${time}`;
+        labels.push(ts);
+        wl.push(r.water_level ?? 0);
+
+        currentHistoryRows.push({
+          date: dateStr,
+          time,
+          water_level: r.water_level ?? 0,
+          road_flood: r.road_flood ?? 0,
+          rise_rate: r.rise_rate ?? 0,
+          fall_rate: r.fall_rate ?? 0,
+          over_sidewalk: r.over_sidewalk ?? 0,
+          flood_duration: r.flood_duration ?? 0
+        });
+      });
+    }
+
+    if (!labels.length) {
+      alert(`Không có dữ liệu trong ${daysBack} ngày.`);
+      if (historyChart) historyChart.destroy();
+      currentFloodSummary = null;
+      updateHistorySummaryUI(null);
+      return;
+    }
+
+    drawHistoryChart(labels, wl, [], [], `Mực nước ${daysBack} ngày`);
+    currentHistoryStationName =
+      currentStations[stId]?.name || STATION_META[stId]?.name || stId;
+
+    currentFloodSummary = analyzeFloodSummary(currentHistoryRows);
+    updateHistorySummaryUI(currentFloodSummary);
+  }
+
+  btn7d.onclick  = () => loadRangeDays(7);
+  btn30d.onclick = () => loadRangeDays(30);
+
+  btnCsv.onclick = () => {
+    if (!currentHistoryRows.length) {
+      alert("Không có dữ liệu để xuất.");
+      return;
+    }
+    const stId = historyStationSelect.value;
+    let csv = "date,time,water_level,road_flood,rise_rate,fall_rate,over_sidewalk,flood_duration\n";
+    currentHistoryRows.forEach(r => {
+      csv += `${r.date},${r.time},${r.water_level},${r.road_flood},${r.rise_rate},${r.fall_rate},${r.over_sidewalk},${r.flood_duration}\n`;
+    });
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url;
+    a.download = `history_${stId}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  btnPdf.onclick = () => {
+    if (!currentHistoryRows.length || !historyChart) {
+      alert("Không có dữ liệu để xuất PDF.");
+      return;
+    }
+    const stId = historyStationSelect.value;
+    const date = historyDateInput.value || "range";
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("p", "mm", "a4");
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(16);
+    doc.text("BÁO CÁO MỰC NƯỚC", 10, 12);
+
+    const stationName = currentHistoryStationName || stId;
+    doc.setFontSize(13);
+    doc.text(`Trạm: ${stationName} (${stId})`, 10, 22);
+    doc.text(`Thời gian: ${date}`, 10, 28);
+
+    const img = historyChartCanvas.toDataURL("image/png", 1.0);
+    doc.addImage(img, "PNG", 10, 35, 190, 80);
+
+    let y = 120;
+    doc.setFontSize(12);
+    doc.text("TÓM TẮT ĐỢT NGẬP", 10, y); y += 6;
+
+    if (currentFloodSummary) {
+      const s = currentFloodSummary;
+
+      doc.setFontSize(11);
+      doc.text(`1. Bắt đầu mưa: ${s.startRain || "Không xác định"}`, 10, y); y += 5;
+      doc.text(`2. Bắt đầu ngập: ${s.startFlood || "Không xác định"}`, 10, y); y += 5;
+      doc.text(`   (Dài ${FLOOD_LENGTH_M} m, rộng ${FLOOD_WIDTH_M} m, sâu tối đa ${s.maxDepth.toFixed(1)} cm)`, 10, y); y += 5;
+      doc.text(`3. Hết mưa: ${s.endRain || "Không xác định"}`, 10, y); y += 5;
+      doc.text(`4. Hết ngập: ${s.endFlood || "Không xác định"}`, 10, y); y += 7;
+
+      doc.text(`Độ sâu trung bình: ${s.avgDepth.toFixed(1)} cm`, 10, y); y += 5;
+      doc.text(`Thời gian ngập liên tục: ${s.totalDurationMin.toFixed(1)} phút`, 10, y); y += 5;
+      doc.text(`Diện tích: ${s.area_m2.toFixed(1)} m²`, 10, y); y += 5;
+      doc.text(`Thể tích nước ước tính: ${s.volume_m3.toFixed(1)} m³`, 10, y); y += 7;
+    } else {
+      doc.setFontSize(11);
+      doc.text("Không có dữ liệu / không phát hiện ngập trong khoảng thời gian được chọn.", 10, y);
+      y += 7;
+    }
+
+    const levels = currentHistoryRows.map(r => r.water_level);
+    const max = Math.max(...levels);
+    const min = Math.min(...levels);
+    const avg = levels.reduce((a,b)=>a+b,0)/levels.length;
+
+    y += 3;
+    doc.setFontSize(12);
+    doc.text("THỐNG KÊ MỰC NƯỚC", 10, y); y += 6;
+    doc.setFontSize(11);
+    doc.text(`Mực nước cao nhất: ${max.toFixed(1)} cm`, 10, y); y += 6;
+    doc.text(`Mực nước thấp nhất: ${min.toFixed(1)} cm`, 10, y);       y += 6;
+    doc.text(`Mực nước trung bình: ${avg.toFixed(1)} cm`, 10, y);      y += 6;
+    doc.text(`Tổng số bản ghi: ${currentHistoryRows.length}`, 10, y);
+
+    doc.save(`report_${stId}_${date}.pdf`);
+  };
+
+  /* ==========================
+     FIX MAP KHÔNG HIỆN / RESIZE
+  ========================== */
+  setTimeout(() => map.invalidateSize(true), 300);
+  window.addEventListener("load", () => map.invalidateSize(true));
+  window.addEventListener("resize", () => map.invalidateSize(true));
+</script>
+
+</body>
+</html>
