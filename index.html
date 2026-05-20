@@ -1140,10 +1140,13 @@ function showStationPopup(id) {
       </div>
 
       <a class="popup-link" target="_blank"
-         href="https://giaothong.hochiminhcity.gov.vn/expandcameraplayer?camId=662b50571afb9c00172d87df&camLocation=Qu%E1%BB%91c%20L%E1%BB%99%2050%20-%20B%C3%B9i%20Minh%20Tr%E1%BB%B1c&camMode=camera&videoUrl=https://d2zihajmogu5jn.cloudfront.net/bipbop-advanced/bipbop_16x9_variant.m3u8/?q=${s.lat},${s.lng}">
+         <a class="popup-link" target="_blank"
+href="https://share.yoosee.com/share/index.html?Type=2&InviteCode=d432d1b92e2fcd0150a677c3f1f7f85c&SharerName=057873371&AppVersion=3014729&DeviceID=7939291259&Permission=117&ExpireTime=1778570155">
 
-        📍 Xem Camera trực tiếp
-      </a>
+📍 Xem Camera trực tiếp
+</a>
+
+       
     </div>
   `;
 
@@ -1818,7 +1821,7 @@ window.addEventListener("load", () => {
 /* Service Worker */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
-    .register("/sw.js")
+      .register("/sw.js?v=10")
     .catch(err => console.warn("Service Worker đăng ký lỗi:", err));
 }
 </script>
