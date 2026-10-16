@@ -1775,7 +1775,7 @@ function displayFloodStats(events, avgDepth, totalMinutes) {
   events.forEach((ev, idx) => {
     container.innerHTML += `
       <div style="margin-bottom:6px;">
-        <b>Mẫu ngập nhiễu đợt 1 ${idx+1}:</b> ${ev.start} → ${ev.end}<br>
+        <b>Mẫu ngập nhiễu đợt ${idx+1}:</b> ${ev.start} → ${ev.end}<br>
         Độ sâu lớn nhất trong khoảng: <b>${ev.maxDepth} cm</b>
       </div>
     `;
